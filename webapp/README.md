@@ -48,7 +48,7 @@ Optional environment:
 cp .env.example .env
 ```
 
-**No database required.** All app data (chats, documents, settings, memories) lives in your **browser's IndexedDB** — that's the local-first design. The included Prisma + SQLite scaffold is optional and only relevant if you later add server-side features.
+**No database required.** All app data (chats, documents, settings, memories) lives in your **browser's IndexedDB** — that's the local-first design.
 
 ## Deploy to Vercel
 
@@ -115,7 +115,6 @@ Full guide with custom domains, DNS, and a troubleshooting table: [`docs/VERCEL_
 | UI | Tailwind CSS 4 · shadcn/ui (New York) · Lucide icons · Framer Motion |
 | State | Zustand + IndexedDB repositories (client-side persistence) |
 | AI | Client-side runtimes you connect: Ollama, OpenAI-compatible, Offline Sandbox · on-device Whisper (Transformers.js) |
-| Optional DB | Prisma + SQLite scaffold (unused by the app out of the box) |
 
 ## Project structure
 
@@ -132,7 +131,6 @@ webapp/
 │   ├── hooks/                # use-toast, use-mobile
 │   └── lib/                  # hash router, event bus, repositories, services, crypto
 ├── public/                   # logo, manifest, sw.js, marketing images (webp)
-├── prisma/                   # optional SQLite scaffold
 ├── docs/                     # deployment, integration & marketing guides
 ├── .env.example              # env template (optional vars only)
 └── README.md                 # you are here
@@ -146,7 +144,8 @@ webapp/
 | `npm run build` | Production build (standalone output) |
 | `npm start` | Serve the production build |
 | `npm run lint` | ESLint (Next.js rules) |
-| `npm run db:push` | Push the Prisma schema to SQLite *(optional)* |
+| `npm test` | Unit tests (Vitest) |
+| `npm run test:e2e` | Browser tests (Playwright; run `npx playwright install chromium` once) |
 
 > Using Bun? Swap `npm run X` for `bun run X`. The included `bun.lock` pins the exact dependency versions this app was built and tested with — Vercel picks it up automatically and installs with Bun. If you prefer npm, delete `bun.lock` and commit `package-lock.json` instead.
 

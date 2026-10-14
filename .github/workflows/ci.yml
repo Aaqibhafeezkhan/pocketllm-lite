@@ -49,4 +49,4 @@ jobs:
           name: playwright-traces
           path: webapp/test-results
           if-no-files-found: ignore
-      - run: npm audit --omit=dev --audit-level=critical
+      - run: npm audit --omit=dev --audit-level=high
