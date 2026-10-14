@@ -43,6 +43,14 @@ class _BlockingInference extends _ServerInference {
   }
 }
 
+class _FailingInference extends _ServerInference {
+  @override
+  Stream<ChatToken> chatStream(ChatRequest request) async* {
+    yield const ChatToken(text: 'partial');
+    throw StateError('runtime crashed');
+  }
+}
+
 void main() {
   late OpenAiServerService server;
   late Uri baseUri;
@@ -202,5 +210,59 @@ void main() {
     expect(second.statusCode, 429);
     inference.release.complete();
     expect((await first).statusCode, 200);
+  });
+
+  test('a runtime failure mid-stream terminates the SSE response', () async {
+    await server.stopServer();
+    final inference = _FailingInference();
+    server = OpenAiServerService(
+      pipeline: GenerationPipeline(resolveInference: (_) async => inference),
+      listModels: () async => const [],
+      embed: inference.generateEmbeddings,
+    );
+    await server.startServer(
+      const OpenAiServerConfig(enabled: true, port: 0, apiKey: key),
+    );
+    baseUri = Uri.parse('http://127.0.0.1:${server.boundPort}');
+
+    final response = await http
+        .post(
+          baseUri.resolve('/v1/chat/completions'),
+          headers: {
+            'Authorization': 'Bearer $key',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'model': 'local-test',
+            'stream': true,
+            'messages': [
+              {'role': 'user', 'content': 'hello'}
+            ],
+          }),
+        )
+        .timeout(const Duration(seconds: 5));
+
+    expect(response.body, contains('partial'));
+    expect(response.body, contains('"error"'));
+    expect(response.body, isNot(contains('"finish_reason":"stop"')));
+    expect(response.body, contains('data: [DONE]'));
+  });
+
+  test('rejects request bodies over the size limit with 413', () async {
+    final oversized = 'x' * (4 * 1024 * 1024 + 1024);
+    final response = await http.post(
+      baseUri.resolve('/v1/chat/completions'),
+      headers: {
+        'Authorization': 'Bearer $key',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'model': 'local-test',
+        'messages': [
+          {'role': 'user', 'content': oversized}
+        ],
+      }),
+    );
+    expect(response.statusCode, 413);
   });
 }

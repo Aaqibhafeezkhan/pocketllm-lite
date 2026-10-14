@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -22,6 +23,10 @@ class OpenAiServerConfig {
     this.localhostOnly = true,
     this.maxConcurrentRequests = 2,
   });
+}
+
+class _PayloadTooLarge implements Exception {
+  const _PayloadTooLarge();
 }
 
 class OpenAiServerLog {
@@ -45,6 +50,7 @@ class OpenAiServerService {
   final List<OpenAiServerLog> _logs = [];
   int _activeRequests = 0;
   final Map<String, List<DateTime>> _requestTimes = {};
+  static const _maxBodyBytes = 4 * 1024 * 1024;
 
   OpenAiServerService({
     required GenerationPipeline pipeline,
@@ -103,8 +109,8 @@ class OpenAiServerService {
     var acquiredSlot = false;
     try {
       request.response.headers.contentType = ContentType.json;
-      if (request.headers.value(HttpHeaders.authorizationHeader) !=
-          'Bearer $_activeApiKey') {
+      if (!_isAuthorized(
+          request.headers.value(HttpHeaders.authorizationHeader))) {
         status = HttpStatus.unauthorized;
         await _json(request.response, status, {
           'error': {'message': 'Unauthorized'}
@@ -162,15 +168,18 @@ class OpenAiServerService {
           'error': {'message': 'Endpoint not found'}
         });
       }
-    } catch (error) {
+    } on _PayloadTooLarge {
+      status = HttpStatus.requestEntityTooLarge;
+      await _tryJson(request.response, status, 'Request too large');
+    } on FormatException catch (error) {
       status = HttpStatus.badRequest;
-      try {
-        await _json(request.response, status, {
-          'error': {'message': error.toString()}
-        });
-      } on StateError {
-        // Streaming responses may already be closed by the client.
-      }
+      await _tryJson(request.response, status, error.message);
+    } on TypeError {
+      status = HttpStatus.badRequest;
+      await _tryJson(request.response, status, 'Malformed request body');
+    } catch (error) {
+      status = HttpStatus.internalServerError;
+      await _tryJson(request.response, status, error.toString());
     } finally {
       if (acquiredSlot) _activeRequests--;
       _log(request, status);
@@ -219,37 +228,54 @@ class OpenAiServerService {
       request.response.headers.contentType =
           ContentType('text', 'event-stream', charset: 'utf-8');
       request.response.headers.set('Cache-Control', 'no-cache');
-      await for (final token in _pipeline.stream(
-        generation,
-        options: GenerationOptions(cancellationToken: cancellation),
-      )) {
+      var failed = false;
+      try {
+        await for (final token in _pipeline.stream(
+          generation,
+          options: GenerationOptions(cancellationToken: cancellation),
+        )) {
+          request.response.write('data: ${jsonEncode({
+                'id': id,
+                'object': 'chat.completion.chunk',
+                'created': created,
+                'model': model,
+                'choices': [
+                  {
+                    'index': 0,
+                    'delta': {'content': token.text},
+                    'finish_reason': null
+                  }
+                ],
+              })}\n\n');
+          await request.response.flush();
+        }
+      } catch (error) {
+        failed = true;
+        // Headers are already sent, so report the failure in-band and still
+        // terminate the stream instead of leaving the client hanging.
+        if (!cancellation.isCancelled) {
+          request.response.write('data: ${jsonEncode({
+                'error': {
+                  'message': error.toString(),
+                  'type': 'generation_error',
+                },
+              })}\n\n');
+        }
+      }
+      if (!failed) {
         request.response.write('data: ${jsonEncode({
               'id': id,
               'object': 'chat.completion.chunk',
               'created': created,
               'model': model,
               'choices': [
-                {
-                  'index': 0,
-                  'delta': {'content': token.text},
-                  'finish_reason': null
-                }
+                {'index': 0, 'delta': {}, 'finish_reason': 'stop'}
               ],
             })}\n\n');
-        await request.response.flush();
       }
-      request.response.write('data: ${jsonEncode({
-            'id': id,
-            'object': 'chat.completion.chunk',
-            'created': created,
-            'model': model,
-            'choices': [
-              {'index': 0, 'delta': {}, 'finish_reason': 'stop'}
-            ],
-          })}\n\n');
       request.response.write('data: [DONE]\n\n');
       await request.response.close();
-      return HttpStatus.ok;
+      return failed ? HttpStatus.internalServerError : HttpStatus.ok;
     }
     final result = await _pipeline.complete(generation);
     await _json(request.response, HttpStatus.ok, {
@@ -300,11 +326,44 @@ class OpenAiServerService {
   }
 
   Future<Map<String, dynamic>> _body(HttpRequest request) async {
-    final text = await utf8.decoder.bind(request).join();
-    if (text.length > 4 * 1024 * 1024) {
-      throw const FormatException('Request too large');
+    if (request.contentLength > _maxBodyBytes) throw const _PayloadTooLarge();
+    final bytes = BytesBuilder(copy: false);
+    await for (final chunk in request) {
+      bytes.add(chunk);
+      if (bytes.length > _maxBodyBytes) throw const _PayloadTooLarge();
     }
-    return Map<String, dynamic>.from(jsonDecode(text) as Map);
+    return Map<String, dynamic>.from(
+      jsonDecode(utf8.decode(bytes.takeBytes())) as Map,
+    );
+  }
+
+  bool _isAuthorized(String? header) {
+    final key = _activeApiKey;
+    if (key == null || header == null) return false;
+    final expected = utf8.encode('Bearer $key');
+    final actual = utf8.encode(header);
+    // Compare every byte so response timing does not reveal a key prefix.
+    var diff = expected.length ^ actual.length;
+    for (var i = 0; i < expected.length; i++) {
+      diff |= expected[i] ^ (i < actual.length ? actual[i] : 0);
+    }
+    return diff == 0;
+  }
+
+  Future<void> _tryJson(
+    HttpResponse response,
+    int status,
+    String message,
+  ) async {
+    try {
+      await _json(response, status, {
+        'error': {'message': message}
+      });
+    } on StateError {
+      // Headers were already sent or the client closed the connection.
+    } on HttpException {
+      // The client went away before the error body was written.
+    }
   }
 
   Future<void> _json(HttpResponse response, int status, Object body) async {
