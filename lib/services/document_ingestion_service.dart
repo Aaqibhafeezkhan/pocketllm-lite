@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -42,7 +43,7 @@ class DocumentIngestionService {
         case '.txt':
         case '.md':
         case '.csv':
-          return [_ExtractedPage(1, await file.readAsString())];
+          return [_ExtractedPage(1, _decodeText(await file.readAsBytes()))];
         case '.pdf':
           final bytes = await file.readAsBytes();
           final document = PdfDocument(inputBytes: bytes);
@@ -72,9 +73,28 @@ class DocumentIngestionService {
     }
   }
 
+  /// Decodes UTF-8 (with or without a BOM) and falls back to Latin-1 so legacy
+  /// Windows exports do not fail with an opaque extraction error.
+  String _decodeText(List<int> bytes) {
+    var start = 0;
+    if (bytes.length >= 3 &&
+        bytes[0] == 0xEF &&
+        bytes[1] == 0xBB &&
+        bytes[2] == 0xBF) {
+      start = 3;
+    }
+    final body = start == 0 ? bytes : bytes.sublist(start);
+    try {
+      return utf8.decode(body);
+    } on FormatException {
+      return latin1.decode(body);
+    }
+  }
+
   List<DocumentChunk> _chunkPages(
     String documentId,
     List<_ExtractedPage> pages, {
+    bool paged = true,
     int targetTokens = 450,
     int overlapTokens = 75,
   }) {
@@ -117,10 +137,14 @@ class DocumentIngestionService {
             documentId: documentId,
             content: content,
             index: chunks.length,
+            // Only paginated formats have real page numbers. Plain text is
+            // cited by excerpt number so the model never claims "page 1".
             metadata: {
-              'page': page.number,
+              if (paged) 'page': page.number else 'section': chunks.length + 1,
               'tokenCount': tokens,
-              'citation': 'Page ${page.number}',
+              'citation': paged
+                  ? 'Page ${page.number}'
+                  : 'Section ${chunks.length + 1}',
             },
           ),
         );
@@ -151,7 +175,7 @@ class DocumentIngestionService {
     }
 
     final documentId = _uuid.v4();
-    final chunks = _chunkPages(documentId, pages);
+    final chunks = _chunkPages(documentId, pages, paged: extension == '.pdf');
     final document = IngestedDocument(
       id: documentId,
       title: p.basenameWithoutExtension(filename),

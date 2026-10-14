@@ -83,6 +83,30 @@ void main() {
     expect(invalid.error, contains('must be a string'));
   });
 
+  test('tolerates non-string call ids from model output', () {
+    final calls = service.parseToolCalls(
+      '{"id":7,"tool":"calculator","arguments":{"expression":"2+2"}}',
+    );
+    expect(calls, hasLength(1));
+    expect(calls.single.name, 'calculator');
+    expect(calls.single.id, isNotEmpty);
+  });
+
+  test('legacy XML adapter parses JSON arguments in either quote style', () {
+    final single = service.parseToolCalls(
+      "<tool_call name=\"calculator\" args='{\"expression\":\"2+2\"}' />",
+    );
+    expect(single, hasLength(1));
+    expect(single.single.name, 'calculator');
+    expect(single.single.arguments['expression'], '2+2');
+
+    final escaped = service.parseToolCalls(
+      '<tool_call name="calculator" args="{&quot;expression&quot;:&quot;3+3&quot;}" />',
+    );
+    expect(escaped, hasLength(1));
+    expect(escaped.single.arguments['expression'], '3+3');
+  });
+
   test('does not expose canned knowledge search', () {
     expect(service.getTool('knowledge_search'), isNull);
   });

@@ -36,7 +36,11 @@ void main() {
     expect(document.metadata['pageCount'], 1);
     expect(document.metadata['schemaVersion'], 2);
     expect(chunks, isNotEmpty);
-    expect(chunks.every((chunk) => chunk.metadata['page'] == 1), isTrue);
+    expect(chunks.every((chunk) => chunk.metadata['page'] == null), isTrue);
+    expect(
+      [for (final chunk in chunks) chunk.metadata['section']],
+      [for (var i = 1; i <= chunks.length; i++) i],
+    );
     expect(chunks.every((chunk) => chunk.content.trim().isNotEmpty), isTrue);
   });
 
@@ -55,5 +59,22 @@ void main() {
       () => DocumentIngestionService().ingestFile(unsupported),
       throwsA(isA<DocumentParseError>()),
     );
+  });
+
+  test('legacy single-byte text files are decoded instead of rejected',
+      () async {
+    final file = File('${temporaryDirectory.path}/cafe.csv');
+    // "café menu" encoded as Latin-1: 0xE9 is invalid as UTF-8.
+    await file.writeAsBytes([
+      ...'name,item\n'.codeUnits,
+      0x63,
+      0x61,
+      0x66,
+      0xE9,
+    ]);
+
+    final result = await DocumentIngestionService().ingestFile(file);
+    final chunks = result['chunks'] as List<DocumentChunk>;
+    expect(chunks.map((chunk) => chunk.content).join(' '), contains('café'));
   });
 }

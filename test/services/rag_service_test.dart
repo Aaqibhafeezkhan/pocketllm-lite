@@ -20,4 +20,20 @@ void main() {
     expect(context.promptContext, contains('The verified passage text.'));
     expect(context.promptContext, contains('do not contain the answer'));
   });
+
+  test('unpaged text sources are cited by section, never as a page', () {
+    const chunk = DocumentChunk(
+      id: 'chunk-2',
+      documentId: 'doc-2',
+      content: 'A note from a plain text file.',
+      index: 3,
+      metadata: {'filename': 'notes.txt', 'section': 4},
+    );
+    const context = RetrievedDocumentContext([
+      DocumentSearchResult(chunk, 0.5),
+    ]);
+
+    expect(context.promptContext, contains('[notes.txt, section 4]'));
+    expect(context.promptContext, isNot(contains('page')));
+  });
 }

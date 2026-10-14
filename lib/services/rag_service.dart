@@ -42,7 +42,12 @@ class RetrievedDocumentContext {
       final chunk = result.chunk;
       final page = chunk.metadata['page'] as int?;
       final filename = chunk.metadata['filename'] as String? ?? 'document';
-      final citation = page == null ? '[$filename]' : '[$filename, page $page]';
+      final section = chunk.metadata['section'] as int?;
+      final citation = page != null
+          ? '[$filename, page $page]'
+          : section != null
+              ? '[$filename, section $section]'
+              : '[$filename]';
       buffer.writeln('\n$citation\n${chunk.content}');
     }
     return buffer.toString().trim();
@@ -54,6 +59,7 @@ class RetrievedDocumentContext {
           'chunkId': result.chunk.id,
           'documentId': result.chunk.documentId,
           'page': result.chunk.metadata['page'],
+          'section': result.chunk.metadata['section'],
           'keywordScore': result.keywordScore,
           'semanticScore': result.semanticScore,
           'fusedScore': result.fusedScore,
