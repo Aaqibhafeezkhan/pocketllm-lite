@@ -1,3 +1,4 @@
+import 'widgets/first_model_setup_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -86,6 +87,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         iconColor: theme.colorScheme.onTertiaryContainer,
                       ),
                       _buildPrivacyPreferencesPage(),
+                      FirstModelSetupPage(onFinishTo: _finishAndGo),
                     ],
                   ),
                 ),
@@ -98,7 +100,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       // Page indicators
                       Row(
                         children: List.generate(
-                          3,
+                          _pageCount,
                           (index) => AnimatedContainer(
                             duration: AppMotion.durationMD,
                             curve: AppMotion.curveStandard,
@@ -115,7 +117,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         ),
                       ),
                       // Navigation button
-                      if (_currentPage == 2)
+                      if (_currentPage == _pageCount - 1)
                         FilledButton.icon(
                           onPressed: _finishOnboarding,
                           icon: const Icon(Icons.arrow_forward_rounded),
@@ -316,6 +318,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         );
       },
     );
+  }
+
+  static const _pageCount = 4;
+
+  /// Completes onboarding and opens [route] (an alternative setup path).
+  Future<void> _finishAndGo(String route) async {
+    final storage = ref.read(storageServiceProvider);
+    await storage.saveSetting(AppConstants.isFirstLaunchKey, false);
+    if (mounted) context.go(route);
   }
 
   Future<void> _finishOnboarding() async {

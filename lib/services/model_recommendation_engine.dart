@@ -41,6 +41,52 @@ class ModelRecommendationResult {
 class ModelRecommendationEngine {
   const ModelRecommendationEngine();
 
+  /// Label for a model that is not installed yet, known only by file size
+  /// (for example a catalog entry). It applies the same measured-headroom
+  /// rule as [evaluate] and can never report a load-tested result.
+  ModelRecommendationResult evaluateFileSize({
+    required DeviceHardwareProfile profile,
+    required double fileSizeGB,
+  }) {
+    final available = profile.availableRamGB;
+    final total = profile.totalRamGB;
+    final evidence = <String>[
+      'Catalog size ${fileSizeGB.toStringAsFixed(2)} GiB; runtime RAM will be higher.',
+    ];
+    if (available == null || total == null) {
+      evidence.add('Available or total RAM could not be measured.');
+      return ModelRecommendationResult(
+        badge: RecommendationBadge.experimental,
+        fileSizeGB: fileSizeGB,
+        availableRamGB: available,
+        loadTestedOnDevice: false,
+        evidence: evidence,
+      );
+    }
+    evidence.add(
+      'Measured available RAM: ${available.toStringAsFixed(2)} GiB of '
+      '${total.toStringAsFixed(2)} GiB total.',
+    );
+    if (fileSizeGB > total * 0.85 || fileSizeGB > available * 0.80) {
+      evidence.add('The weight file alone leaves insufficient headroom.');
+      return ModelRecommendationResult(
+        badge: RecommendationBadge.highMemoryRisk,
+        fileSizeGB: fileSizeGB,
+        availableRamGB: available,
+        loadTestedOnDevice: false,
+        evidence: evidence,
+      );
+    }
+    evidence.add('This exact model has not been load-tested on this device.');
+    return ModelRecommendationResult(
+      badge: RecommendationBadge.experimental,
+      fileSizeGB: fileSizeGB,
+      availableRamGB: available,
+      loadTestedOnDevice: false,
+      evidence: evidence,
+    );
+  }
+
   ModelRecommendationResult evaluate({
     required DeviceHardwareProfile profile,
     required ModelManifest manifest,
