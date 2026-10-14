@@ -13,10 +13,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+  --font-sans: var(--ff-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     ui-sans-serif, sans-serif;
-  --font-display: "Outfit", "Inter", ui-sans-serif, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: var(--ff-outfit), "Outfit", var(--ff-inter), "Inter", ui-sans-serif, sans-serif;
+  --font-mono: var(--ff-jetbrains-mono), "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -504,9 +504,9 @@ html { scroll-behavior: smooth; }
   --night: #121216;
   --night-soft: #1a1b22;
   --white: #fff;
-  --display: "Instrument Serif", Georgia, serif;
-  --body: "Manrope", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --script: "Caveat", "Segoe Script", cursive;
+  --display: var(--ff-instrument-serif), "Instrument Serif", Georgia, serif;
+  --body: var(--ff-manrope), "Manrope", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --script: var(--ff-caveat), "Caveat", "Segoe Script", cursive;
   --shadow: 0 24px 70px rgba(58, 38, 66, .14);
   --shadow-soft: 0 14px 40px rgba(58, 38, 66, .09);
   --radius: 26px;

@@ -3,16 +3,26 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('v1.0.38 release metadata and documentation agree', () {
+  test('release metadata and documentation agree with pubspec', () {
     final pubspec = File('pubspec.yaml').readAsStringSync();
+    final match =
+        RegExp(r'^version:\s*(\d+\.\d+\.\d+)\+(\d+)\s*$', multiLine: true)
+            .firstMatch(pubspec);
+    expect(match, isNotNull, reason: 'pubspec.yaml must declare a version');
+    final version = match!.group(1)!;
+    final build = match.group(2)!;
     final readme = File('README.md').readAsStringSync();
     final releaseNotes = File('RELEASE_NOTES.md').readAsStringSync();
     final changelog = File('CHANGELOG.md').readAsStringSync();
 
-    expect(pubspec, contains('version: 1.0.38+38'));
-    expect(readme, contains('version-1.0.38'));
-    expect(releaseNotes, contains('v1.0.38'));
-    expect(changelog, contains('## [1.0.38] - 2026-08-29'));
+    expect(
+      int.parse(build),
+      int.parse(version.split('.').last),
+      reason: 'build number tracks the patch number',
+    );
+    expect(readme, contains('version-$version'));
+    expect(releaseNotes, contains('v$version'));
+    expect(changelog, contains('## [$version]'));
     expect(File('LICENSE').readAsStringSync(), startsWith('MIT License'));
     expect(File('CONTRIBUTING.md').existsSync(), isTrue);
     expect(File('CODE_OF_CONDUCT.md').existsSync(), isTrue);
@@ -63,8 +73,11 @@ void main() {
 
   test('public product copy excludes disproven privacy and support claims', () {
     final surfaces = <File>[
-      File('index.html'),
-      File('pocketllm-website/privacy.html'),
+      File('webapp/src/features/marketing/legal-content.ts'),
+      File('webapp/src/features/marketing/marketing-pages.tsx'),
+      File('webapp/src/features/marketing/marketing-site.tsx'),
+      File('webapp/src/features/marketing/releases-data.ts'),
+      File('README.md'),
       File('docs/pr_submissions/PR_awesome_ollama.md'),
       File('docs/pr_submissions/PR_awesome_local_ai.md'),
     ];
@@ -115,5 +128,12 @@ void main() {
     expect(directLaunchFiles, isEmpty);
     expect(RegExp(r'launchUrl\(').allMatches(deviceActions), hasLength(1));
     expect(deviceActions, contains("Uri.parse('mailto:"));
+  });
+
+  test('web edition does not load runtime fonts from third-party hosts', () {
+    final layout = File('webapp/src/app/layout.tsx').readAsStringSync();
+    expect(layout, isNot(contains('fonts.googleapis.com')));
+    expect(layout, isNot(contains('fonts.gstatic.com')));
+    expect(layout, contains('next/font/google'));
   });
 }

@@ -11,31 +11,43 @@ class MarkdownHandlers {
 
     // Block network images
     if (scheme == 'http' || scheme == 'https') {
-      return Tooltip(
-        message: 'Network image blocked for privacy',
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.5)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.broken_image, size: 16, color: Colors.grey),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  alt ?? 'Image blocked',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+      return Builder(
+        builder: (context) {
+          final colors = Theme.of(context).colorScheme;
+          return Tooltip(
+            message: 'Network image blocked for privacy',
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: colors.outlineVariant),
               ),
-            ],
-          ),
-        ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.broken_image,
+                    size: 16,
+                    color: colors.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      alt ?? 'Image blocked',
+                      style: TextStyle(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       );
     }
 

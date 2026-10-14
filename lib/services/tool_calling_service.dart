@@ -457,10 +457,12 @@ class ToolCallingService {
         if (decoded is Map<String, dynamic> &&
             decoded['tool'] is String &&
             decoded['arguments'] is Map) {
+          final rawId = decoded['id'];
           calls.add(
             ParsedToolCall(
-              id: decoded['id'] as String? ??
-                  'call_${DateTime.now().microsecondsSinceEpoch}_${calls.length}',
+              id: rawId is String && rawId.isNotEmpty
+                  ? rawId
+                  : 'call_${DateTime.now().microsecondsSinceEpoch}_${calls.length}',
               name: decoded['tool'] as String,
               arguments: Map<String, dynamic>.from(
                 decoded['arguments'] as Map,
@@ -475,12 +477,15 @@ class ToolCallingService {
     }
     if (calls.isNotEmpty) return calls;
 
+    // JSON arguments always contain double quotes, so the attribute is either
+    // single-quoted or double-quoted with HTML entities.
     final legacy = RegExp(
-      r'<tool_call\s+name="([^"]+)"\s+args=\s*[\x27"]([^\x27"]+)[\x27"]\s*/>',
+      r'''<tool_call\s+name="([^"]+)"\s+args=\s*(?:'([^']*)'|"([^"]*)")\s*/>''',
     );
     for (final match in legacy.allMatches(text)) {
       try {
-        final arguments = jsonDecode(match.group(2) ?? '');
+        final rawArguments = match.group(2) ?? match.group(3) ?? '';
+        final arguments = jsonDecode(_decodeHtmlEntities(rawArguments));
         if (arguments is Map) {
           calls.add(
             ParsedToolCall(
@@ -549,6 +554,14 @@ class ToolCallingService {
       );
     }
   }
+
+  String _decodeHtmlEntities(String value) => value
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&apos;', "'")
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&amp;', '&');
 
   int _findJsonObjectEnd(String text, int start) {
     var depth = 0;

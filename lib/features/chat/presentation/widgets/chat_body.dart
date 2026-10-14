@@ -208,7 +208,8 @@ class _DisconnectedState extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Please ensure Ollama is running and connected',
+                'No model is ready. Download an on-device model, or connect '
+                'an Ollama or OpenAI-compatible server.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -255,10 +256,11 @@ class _EmptyState extends ConsumerWidget {
         ? 'Hi $displayName, what\'s on your mind?'
         : 'Hi, what\'s on your mind?';
 
+    // Suggestions must be things a text model can really do on this app.
     final suggestions = [
-      'What are the different types of shots in ice hockey?',
-      'Create an image of a snowboarder in the Alps',
-      'Tell me about the must see athletes from team usa',
+      'Explain how a binary search works, step by step',
+      'Draft a polite email asking to reschedule a meeting',
+      'Summarize the key ideas of the Pomodoro technique in five bullets',
     ];
 
     return Center(

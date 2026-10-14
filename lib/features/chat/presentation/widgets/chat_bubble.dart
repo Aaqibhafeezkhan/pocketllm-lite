@@ -697,7 +697,9 @@ class _ChatBubbleState extends ConsumerState<ChatBubble> {
                                     Icon(
                                       Icons.star_rounded,
                                       size: 12,
-                                      color: Colors.amber.shade600,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .tertiary,
                                     ),
                                     const SizedBox(width: 4),
                                   ],
@@ -1151,7 +1153,7 @@ class _FocusedMenuOverlay extends ConsumerWidget {
                       Navigator.pop(context);
                     },
                     iconColor: isStarred
-                        ? Colors.amber.shade600
+                        ? Theme.of(context).colorScheme.tertiary
                         : colorScheme.onSurface,
                   ),
                   _buildActionChip(
