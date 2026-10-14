@@ -22,10 +22,12 @@ export function ChatSettings() {
   const patchSettings = useAppStore((s) => s.patchSettings);
 
   const runtimes = inferenceRouter.list();
-  const runtimeOptions = runtimes.map((r) => ({
+  const runtimeOptions = runtimes
+    .filter((r) => r.id !== 'mock' || chat.sandboxEnabled)
+    .map((r) => ({
     value: r.id,
-    label: r.label,
-    hint: r.isLocal ? 'local' : 'network',
+    label: r.id === 'mock' ? 'Demo mode (scripted)' : r.label,
+    hint: r.id === 'mock' ? 'not a real model' : r.isLocal ? 'local' : 'network',
   }));
 
   const runtimeModels = models.filter((m) => m.runtimeId === chat.defaultRuntimeId);
@@ -68,8 +70,7 @@ export function ChatSettings() {
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
           <p className="text-[13px] leading-relaxed">
             Strict Offline is on, so this runtime cannot respond. Only the
-            Offline Sandbox (and loopback Ollama, if allowed) can generate
-            while it stays on. Change it in{' '}
+            Only loopback Ollama can generate while it stays on. Change it in{' '}
             <button
               type="button"
               className="font-medium underline underline-offset-2"
@@ -170,6 +171,33 @@ export function ChatSettings() {
               checked={chat.followUpSuggestions}
               onCheckedChange={(v) => patchSettings({ chat: { followUpSuggestions: v } })}
               aria-label="Follow-up suggestions"
+            />
+          }
+        />
+        <SettingRow
+          label="Demo mode"
+          description="Lets chats use a scripted demo runtime for exploring the interface. It is not a language model, and every reply it produces is labelled as a demo response. Leave off to get real answers only."
+          control={
+            <Switch
+              checked={chat.sandboxEnabled}
+              onCheckedChange={(v) =>
+                patchSettings({
+                  chat: v
+                    ? {
+                        sandboxEnabled: true,
+                        defaultRuntimeId: 'mock',
+                        defaultModelId: 'mock-echo',
+                      }
+                    : {
+                        sandboxEnabled: false,
+                        // Leave the demo runtime so new chats are never demo by accident.
+                        ...(chat.defaultRuntimeId === 'mock'
+                          ? { defaultRuntimeId: 'ollama', defaultModelId: '' }
+                          : {}),
+                      },
+                })
+              }
+              aria-label="Demo mode"
             />
           }
         />

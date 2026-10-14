@@ -249,6 +249,14 @@ export const MessageBubble = memo(function MessageBubble({
               'ring-2 ring-brand/70 ring-offset-2 ring-offset-background shadow-md'
           )}
         >
+          {!isUser && message.runtimeId === 'mock' && (
+            <p
+              className="mb-1.5 inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-foreground"
+              data-testid="demo-response-badge"
+            >
+              Demo response · scripted, not a language model
+            </p>
+          )}
           {isUser ? (
             <p className="whitespace-pre-wrap break-words">{message.content}</p>
           ) : (

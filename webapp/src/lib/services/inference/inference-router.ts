@@ -14,6 +14,11 @@ import { MockRuntime } from './mock-runtime';
 import { providerRepo } from '@/lib/core/db/repositories';
 import { settingsService } from '@/lib/services/settings-service';
 import type { RuntimeId } from '@/lib/types/domain';
+import {
+  assertRuntimeAllowed,
+  hasUsableProvider,
+  isSandboxRuntime,
+} from './sandbox-policy';
 
 class InferenceRouter {
   private runtimes: Map<RuntimeId, InferenceRuntime>;
@@ -64,14 +69,25 @@ class InferenceRouter {
 
   /** All models across all runtimes for pickers. */
   async listAllModels(): Promise<ModelInfo[]> {
+    // Only talk to runtimes the user configured. An unconfigured app must not
+    // probe localhost:11434 on its own at every load.
+    await this.syncProviders();
+    const providers = await providerRepo.getAll();
+    const configured = new Set<RuntimeId>(['mock']);
+    if (providers.some((p) => p.type === 'ollama')) configured.add('ollama');
+    if (providers.some((p) => p.type === 'openai-compatible')) configured.add('openai');
     const results = await Promise.allSettled(
-      this.list().map((r) => r.listModels())
+      this.list()
+        .filter((r) => configured.has(r.id))
+        .map((r) => r.listModels())
     );
     const models: ModelInfo[] = [];
     for (const r of results) {
       if (r.status === 'fulfilled') models.push(...r.value);
     }
-    return models;
+    // The scripted sandbox is only offered after the user opted in.
+    if (settingsService.get().chat.sandboxEnabled) return models;
+    return models.filter((m) => !isSandboxRuntime(m.runtimeId));
   }
 
   /** Convenience passthroughs. */
@@ -80,6 +96,8 @@ class InferenceRouter {
     turns: ChatTurn[],
     options: GenerateOptions
   ): Promise<GenerateResult> {
+    // Fail closed: never let the demo runtime answer without an opt-in.
+    assertRuntimeAllowed(runtimeId, settingsService.get().chat.sandboxEnabled);
     await this.syncProviders();
     return this.get(runtimeId).generate(turns, options);
   }
@@ -102,6 +120,11 @@ class InferenceRouter {
       if (id && id !== 'mock' && configured.has(id)) return id;
     }
     return null;
+  }
+
+  /** True when a real provider with a selected model is configured. */
+  async hasConnectedProvider(): Promise<boolean> {
+    return hasUsableProvider(await providerRepo.getAll());
   }
 
   async testConnection(runtimeId: RuntimeId): Promise<ConnectionTestResult> {

@@ -40,6 +40,8 @@ import { pendingSend } from '@/features/app/home/home-view';
 import { DEEP_LINK_EVENT, deepLink, marketingDraft, pendingDraft } from '@/lib/core/deep-link';
 import { cn, formatBytes, uuid, estimateTokens } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { ConnectModelCard } from '@/features/app/shared/connect-model-card';
+import { useModelConnection } from '@/features/app/shared/use-model-connection';
 import { bus } from '@/lib/core/events/event-bus';
 import type { Attachment, Chat, ChatBranch } from '@/lib/types/domain';
 import { exportChatToMarkdown, exportChatToPrint } from './chat-export';
@@ -85,6 +87,7 @@ export function ChatView({ chatId }: { chatId: string | null }) {
   const [jumpMatch, setJumpMatch] = useState<{ query: string; count: number } | null>(null);
   /** Knowledge-scope popover open state — controlled so /scope can open it. */
   const [scopePickerOpen, setScopePickerOpen] = useState(false);
+  const connection = useModelConnection();
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -420,6 +423,8 @@ export function ChatView({ chatId }: { chatId: string | null }) {
       if (!text && attachments.length === 0) return;
       if (pipeline.isStreaming()) return;
       if (!chatId) return;
+      // No real model and no demo opt-in: never start a generation.
+      if (connection.blocked) return;
       setDraft('');
       const currentAttachments = attachments;
       setAttachments([]);
@@ -430,7 +435,7 @@ export function ChatView({ chatId }: { chatId: string | null }) {
         attachments: currentAttachments,
       });
     },
-    [draft, attachments, chatId]
+    [draft, attachments, chatId, connection.blocked]
   );
 
   const regenerate = useCallback(async () => {
@@ -1085,14 +1090,19 @@ export function ChatView({ chatId }: { chatId: string | null }) {
         aria-label="Conversation"
       >
         <div className="mx-auto w-full max-w-3xl px-4 py-4 pb-6">
-          {messages.length === 0 && !busy && (
+          {messages.length === 0 && !busy && connection.blocked && (
+            <div className="py-10">
+              <ConnectModelCard />
+            </div>
+          )}
+          {messages.length === 0 && !busy && !connection.blocked && (
             <div className="flex flex-col items-center py-14 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-brand/50 bg-brand-soft dark:bg-brand/15">
                 <Brain className="h-6 w-6 text-brand-strong" />
               </div>
               <p className="mt-4 text-[15px] font-medium">Start the conversation</p>
               <p className="mt-1 max-w-sm text-[13px] leading-relaxed text-muted-foreground">
-                Everything stays on this device. Type{' '}
+                Requests go only to the model you connected. Type{' '}
                 <code className="rounded border border-border bg-muted/60 px-1 font-mono text-[11px]">/</code>{' '}
                 for commands, or start from one of these:
               </p>
@@ -1374,7 +1384,14 @@ export function ChatView({ chatId }: { chatId: string | null }) {
                     void send();
                   }
                 }}
-                placeholder={busy ? 'Generating…' : 'Message PocketLLM… “/” for commands · Shift+Enter for a new line'}
+                placeholder={
+                  connection.blocked
+                    ? 'Connect a model to start chatting'
+                    : busy
+                      ? 'Generating…'
+                      : 'Message PocketLLM… “/” for commands · Shift+Enter for a new line'
+                }
+                disabled={connection.blocked}
                 aria-label="Message PocketLLM"
                 rows={1}
                 className="max-h-[180px] min-h-[38px] flex-1 resize-none bg-transparent px-2 py-2 text-[15px] outline-none placeholder:text-muted-foreground/75"
@@ -1422,7 +1439,9 @@ export function ChatView({ chatId }: { chatId: string | null }) {
               ) : (
                 <button
                   type="submit"
-                  disabled={!draft.trim() && attachments.length === 0}
+                  disabled={
+                    connection.blocked || (!draft.trim() && attachments.length === 0)
+                  }
                   className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm transition-all hover:-translate-y-px hover:shadow-md active:scale-90 active:translate-y-0 disabled:pointer-events-none disabled:opacity-30 disabled:shadow-none"
                   aria-label="Send message"
                 >

@@ -27,6 +27,8 @@ import { marketingDraft } from '@/lib/core/deep-link';
 import { audioService } from '@/lib/services/audio-service';
 import { cn, greetingForHour, formatRelativeTime } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { ConnectModelCard } from '@/features/app/shared/connect-model-card';
+import { useModelConnection } from '@/features/app/shared/use-model-connection';
 
 const SUGGESTIONS = [
   { label: 'Learn something new', prompt: 'Explain how local-first AI works, and why it matters for privacy. Keep it practical.' },
@@ -42,6 +44,7 @@ export const pendingSend = { message: '' };
 
 export function HomeView() {
   const { chats, settings } = useAppStore();
+  const connection = useModelConnection();
   const [value, setValue] = useState('');
   const [recording, setRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -49,13 +52,19 @@ export function HomeView() {
   const name = settings.general.displayName?.trim();
   const greeting = `${greetingForHour()}${name ? `, ${name}` : ''}`;
 
-  const send = useCallback(async (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    const chat = await chatService.createChat();
-    pendingSend.message = trimmed;
-    router.navigate(`/app/chat/${chat.id}`);
-  }, []);
+  const send = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      // No real model and no demo opt-in: do not start a chat that cannot
+      // be answered honestly.
+      if (connection.blocked) return;
+      const chat = await chatService.createChat();
+      pendingSend.message = trimmed;
+      router.navigate(`/app/chat/${chat.id}`);
+    },
+    [connection.blocked]
+  );
 
   const startRecording = async () => {
     try {
@@ -158,7 +167,12 @@ export function HomeView() {
                     void send(value);
                   }
                 }}
-                placeholder="Message PocketLLM…"
+                placeholder={
+                  connection.blocked
+                    ? 'Connect a model to start chatting'
+                    : 'Message PocketLLM…'
+                }
+                disabled={connection.blocked}
                 aria-label="Message PocketLLM"
                 rows={1}
                 className="max-h-[200px] w-full resize-none bg-transparent px-3 py-2.5 text-[15px] outline-none placeholder:text-muted-foreground/70"
@@ -183,7 +197,11 @@ export function HomeView() {
                   <Paperclip className="h-4 w-4" />
                 </button>
                 <span className="ml-auto text-[11px] text-muted-foreground/60">
-                  {settings.privacy.strictOffline ? 'Strict Offline · local runtimes only' : 'Runs on your connected model'}
+                  {connection.blocked
+                    ? 'No model connected'
+                    : settings.privacy.strictOffline
+                      ? 'Strict Offline · local runtimes only'
+                      : 'Runs on your connected model'}
                 </span>
                 {recording ? (
                   <button
@@ -207,7 +225,7 @@ export function HomeView() {
                 )}
                 <button
                   type="submit"
-                  disabled={!value.trim()}
+                  disabled={connection.blocked || !value.trim()}
                   className="ml-1 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30"
                   aria-label="Send message"
                 >
@@ -217,12 +235,15 @@ export function HomeView() {
             </div>
           </form>
 
+          {connection.blocked && <ConnectModelCard className="mt-6" />}
+
           {/* Suggestion chips */}
           <div className="mt-4 flex flex-wrap justify-center gap-2" role="list" aria-label="Suggested prompts">
             {SUGGESTIONS.map((s) => (
               <button
                 key={s.label}
                 role="listitem"
+                disabled={connection.blocked && !!s.prompt}
                 onClick={() =>
                   s.prompt ? void send(s.prompt) : router.navigate('/app/knowledge')
                 }

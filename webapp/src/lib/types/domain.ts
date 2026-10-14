@@ -488,6 +488,11 @@ export interface AppSettings {
     followUpSuggestions: boolean;
     /** One-time j/k keyboard navigation hint has been dismissed. */
     jkHintDismissed: boolean;
+    /**
+     * Opt-in to the scripted Offline Sandbox demo runtime. Off by default:
+     * an unconfigured app must show a connect-a-model prompt, not canned text.
+     */
+    sandboxEnabled: boolean;
   };
   memory: {
     enabled: boolean;

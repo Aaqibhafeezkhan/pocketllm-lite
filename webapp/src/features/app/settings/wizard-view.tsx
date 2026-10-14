@@ -57,8 +57,8 @@ const CHOICE_CARDS: Array<{
   },
   {
     id: 'sandbox',
-    title: 'Offline Sandbox',
-    blurb: 'Try the app with no model — canned replies, nothing leaves your device.',
+    title: 'Demo mode',
+    blurb: 'Explore the screens with scripted replies. Not a real model; every reply is labelled.',
     icon: Zap,
   },
   {
@@ -70,10 +70,10 @@ const CHOICE_CARDS: Array<{
 ];
 
 const CHOICE_SUMMARY: Record<WizardChoice, string> = {
-  sandbox: 'Offline Sandbox — deterministic placeholder replies so you can explore every screen. Connect Ollama or an endpoint in Providers for real answers.',
+  sandbox: 'Demo mode — scripted replies so you can explore every screen. They are not model output and are labelled as demo responses. Connect Ollama or an endpoint in Providers for real answers.',
   ollama: 'Ollama — your local server on this machine. Keep Ollama running when you chat.',
   openai: 'OpenAI-compatible — an endpoint you control. Its API key stays in memory for the session.',
-  skip: 'Nothing chosen yet — chats use the Offline Sandbox until you connect a model in Providers.',
+  skip: 'Nothing chosen yet — chat stays disabled, with a prompt to connect a model, until you add a provider.',
 };
 
 const WELCOME_BULLETS = [
@@ -227,8 +227,15 @@ export function WizardView() {
       patch.chat = { defaultRuntimeId: 'ollama', defaultModelId: ollamaModel.trim() };
     } else if (choice === 'openai') {
       patch.chat = { defaultRuntimeId: 'openai', defaultModelId: openaiModel.trim() };
+    } else if (choice === 'sandbox') {
+      // Explicit, informed opt-in to the scripted demo runtime.
+      patch.chat = {
+        defaultRuntimeId: 'mock',
+        defaultModelId: 'mock-echo',
+        sandboxEnabled: true,
+      };
     } else {
-      patch.chat = { defaultRuntimeId: 'mock', defaultModelId: 'mock-echo' };
+      patch.chat = { defaultRuntimeId: 'ollama', defaultModelId: '' };
     }
     patchSettings(patch);
     router.navigate('/app');
@@ -473,9 +480,9 @@ export function WizardView() {
 
               {choice === 'skip' && (
                 <p className="mt-4 rounded-xl border border-border bg-background/50 p-4 text-xs leading-relaxed text-muted-foreground">
-                  Chats use the Offline Sandbox until you connect a model in Providers.
-                  You can switch runtimes per chat and add providers any time on
-                  the Providers page.
+                  Chat stays disabled, and says so, until you connect a model in
+                  Providers. Nothing will answer with made-up text in the
+                  meantime. You can add providers any time on the Providers page.
                 </p>
               )}
             </div>

@@ -73,12 +73,13 @@ const EMPTY_EDITOR: EditorState = {
   instructions: '',
   temperature: null,
   useDefaultModel: true,
-  runtimeId: 'mock',
-  modelId: 'mock-echo',
+  runtimeId: 'ollama',
+  modelId: '',
 };
 
 export function PersonasView() {
-  const { models } = useAppStore();
+  const { models, settings } = useAppStore();
+  const sandboxEnabled = settings.chat.sandboxEnabled;
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [search, setSearch] = useState('');
   const [editor, setEditor] = useState<EditorState>(EMPTY_EDITOR);
@@ -102,7 +103,7 @@ export function PersonasView() {
         instructions: target.instructions,
         temperature: target.temperature ?? null,
         useDefaultModel: !target.modelId,
-        runtimeId: target.runtimeId ?? 'mock',
+        runtimeId: target.runtimeId ?? 'ollama',
         modelId: target.modelId ?? 'mock-echo',
       });
     }
@@ -132,7 +133,7 @@ export function PersonasView() {
       instructions: p.instructions,
       temperature: p.temperature ?? null,
       useDefaultModel: !p.modelId,
-      runtimeId: p.runtimeId ?? 'mock',
+      runtimeId: p.runtimeId ?? 'ollama',
       modelId: p.modelId ?? 'mock-echo',
     });
 
@@ -420,7 +421,7 @@ export function PersonasView() {
                     >
                       <option value="ollama">Ollama</option>
                       <option value="openai">OpenAI-compatible</option>
-                      <option value="mock">Offline Sandbox</option>
+                      {sandboxEnabled && <option value="mock">Demo mode (scripted)</option>}
                     </select>
                   </div>
                   <div className="space-y-1.5">

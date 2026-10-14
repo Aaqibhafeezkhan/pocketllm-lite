@@ -43,8 +43,9 @@ export function PromptLabView() {
   const [temperature, setTemperature] = useState(0.7);
   const [topP, setTopP] = useState(0.9);
   const [maxTokens, setMaxTokens] = useState(1024);
-  const [runtimeId, setRuntimeId] = useState('mock');
-  const [modelId, setModelId] = useState('mock-echo');
+  const sandboxEnabled = useAppStore((s) => s.settings.chat.sandboxEnabled);
+  const [runtimeId, setRuntimeId] = useState('ollama');
+  const [modelId, setModelId] = useState('');
   const [response, setResponse] = useState('');
   const [metrics, setMetrics] = useState<LabRun['results'][number]['metrics']>();
   const [running, setRunning] = useState(false);
@@ -216,7 +217,7 @@ export function PromptLabView() {
                   >
                     <option value="ollama">Ollama</option>
                     <option value="openai">OpenAI-compatible</option>
-                    <option value="mock">Offline Sandbox</option>
+                    {sandboxEnabled && <option value="mock">Demo mode (scripted)</option>}
                   </select>
                 </div>
                 <div className="space-y-1.5">

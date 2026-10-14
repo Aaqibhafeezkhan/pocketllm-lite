@@ -27,8 +27,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
     accent: 'sandy',
   },
   chat: {
-    defaultRuntimeId: 'mock',
-    defaultModelId: 'mock-echo',
+    defaultRuntimeId: 'ollama',
+    defaultModelId: '',
     showTokenCounters: true,
     streamingEnabled: true,
     autoTitle: true,
@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     showTimestamps: 'hover',
     followUpSuggestions: true,
     jkHintDismissed: false,
+    sandboxEnabled: false,
   },
   memory: {
     enabled: true,
@@ -113,9 +114,17 @@ class SettingsService {
     // Migration: the hosted "Assist" runtime was removed. Saved settings that
     // still point at it fall back to the offline sandbox until the user picks
     // a provider (Ollama / OpenAI-compatible).
-    if ((hydrated.chat.defaultRuntimeId as string) === 'assist') {
-      hydrated.chat.defaultRuntimeId = 'mock';
-      hydrated.chat.defaultModelId = 'mock-echo';
+    // Migration: the scripted sandbox used to be the silent default. Settings
+    // that still point at it (or at the removed hosted runtime) move to
+    // Ollama with no model selected, so the app asks the user to connect one
+    // instead of answering with canned text. Existing sandbox chats stay
+    // readable and are labelled; sandbox use now needs an explicit opt-in.
+    if (
+      (hydrated.chat.defaultRuntimeId as string) === 'assist' ||
+      hydrated.chat.defaultRuntimeId === 'mock'
+    ) {
+      hydrated.chat.defaultRuntimeId = 'ollama';
+      hydrated.chat.defaultModelId = '';
     }
     // Migration: drop purposes that no longer exist and add the new ones.
     hydrated.network.allowedPurposes = DEFAULT_SETTINGS.network.allowedPurposes.slice();

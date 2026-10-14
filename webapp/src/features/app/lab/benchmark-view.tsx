@@ -47,9 +47,10 @@ interface BenchRow {
 }
 
 export function BenchmarkView() {
-  const { models } = useAppStore();
-  const [runtimeId, setRuntimeId] = useState<RuntimeId>('mock');
-  const [modelId, setModelId] = useState('mock-echo');
+  const { models, settings } = useAppStore();
+  const sandboxEnabled = settings.chat.sandboxEnabled;
+  const [runtimeId, setRuntimeId] = useState<RuntimeId>('ollama');
+  const [modelId, setModelId] = useState('');
   const [rows, setRows] = useState<BenchRow[]>([]);
   const [running, setRunning] = useState(false);
   const [avg, setAvg] = useState<{ ttft: number; tps: number; total: number } | null>(null);
@@ -152,7 +153,7 @@ export function BenchmarkView() {
               >
                 <option value="ollama">Ollama</option>
                 <option value="openai">OpenAI-compatible</option>
-                <option value="mock">Offline Sandbox</option>
+                {sandboxEnabled && <option value="mock">Demo mode (scripted)</option>}
               </select>
             </div>
             <div className="space-y-1.5">
