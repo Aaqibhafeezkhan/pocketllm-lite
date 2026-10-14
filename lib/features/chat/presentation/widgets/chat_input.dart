@@ -1447,17 +1447,21 @@ class _ChatInputState extends ConsumerState<ChatInput> {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: GestureDetector(
+              Semantics(
+                button: true,
+                label: 'About AI limitations',
+                excludeSemantics: true,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
                   onTap: () {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text('AI Limitations Disclaimer'),
+                        title: const Text('AI limitations'),
                         content: const Text(
-                          'Pocket LLM can run compatible local models on your device or use configured endpoints. '
-                          'Local AI can make mistakes or hallucinate. Please verify important information.',
+                          'PocketLLM can run compatible models on your device '
+                          'or use endpoints you configure. Models can make '
+                          'mistakes or invent facts. Check anything important.',
                         ),
                         actions: [
                           TextButton(
@@ -1468,30 +1472,22 @@ class _ChatInputState extends ConsumerState<ChatInput> {
                       ),
                     );
                   },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Flexible(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 40),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
-                          'This is A.I. and not a real person. Treat everything it says as opinion',
-                          maxLines: 2,
+                          'AI can make mistakes. Check important info.',
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color:
-                                colorScheme.onSurface.withValues(alpha: 0.35),
-                            fontSize: 10,
-                            fontWeight: FontWeight.normal,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 2),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: colorScheme.onSurface.withValues(alpha: 0.35),
-                        size: 14,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),

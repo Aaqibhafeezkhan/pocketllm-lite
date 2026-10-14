@@ -9,6 +9,8 @@ import 'providers/models_provider.dart';
 
 import 'widgets/chat_body.dart';
 import 'widgets/chat_input.dart';
+import 'widgets/chat_overflow_menu.dart';
+import 'widgets/model_picker_chip.dart';
 import 'dialogs/chat_settings_dialog.dart';
 import 'screens/chat_history_screen.dart';
 import '../../media/presentation/screens/media_gallery_screen.dart';
@@ -77,186 +79,62 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    void haptic() {
+      if (ref.read(storageServiceProvider).getSetting(
+            AppConstants.hapticFeedbackKey,
+            defaultValue: true,
+          )) {
+        HapticFeedback.selectionClick();
+      }
+    }
+
     return Scaffold(
       appBar: M3AppBar(
         title: '',
         automaticallyImplyLeading: false,
-        titleWidget: Row(
-          children: [
-            Expanded(
-              child: modelsAsync.when(
-                data: (models) {
-                  String? currentValue = selectedModel;
-                  if (models.isNotEmpty &&
-                      !models.any((m) => m.id == currentValue)) {
-                    currentValue = models.first.id;
-                    Future.microtask(
-                      () => ref
-                          .read(chatProvider.notifier)
-                          .setModel(currentValue!),
-                    );
-                  }
-
-                  if (models.isEmpty) {
-                    return Text(
-                      'No Models Available',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    );
-                  }
-
-                  return Align(
-                    alignment: Alignment.centerLeft,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 180),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            value: currentValue,
-                            icon: Icon(
-                              Icons.expand_more_rounded,
-                              size: 20,
-                              color: colorScheme.onPrimaryContainer,
-                            ),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onPrimaryContainer,
-                            ),
-                            dropdownColor: colorScheme.surfaceContainerHigh,
-                            borderRadius: BorderRadius.circular(16),
-                            elevation: 4,
-                            selectedItemBuilder: (BuildContext context) {
-                              return models.map<Widget>((m) {
-                                final isActive = m.id == activeLoadedId;
-                                return Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (isActive) ...[
-                                        Icon(
-                                          Icons.bolt_rounded,
-                                          size: 14,
-                                          color: colorScheme.onPrimaryContainer,
-                                        ),
-                                        const SizedBox(width: 4),
-                                      ],
-                                      Flexible(
-                                        child: Text(
-                                          m.name,
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                          style: theme.textTheme.bodyMedium
-                                              ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                colorScheme.onPrimaryContainer,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList();
-                            },
-                            items: models.map<DropdownMenuItem<String>>((m) {
-                              final isActive = m.id == activeLoadedId;
-                              return DropdownMenuItem<String>(
-                                value: m.id,
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      m.isLocal ? '📁 ' : '☁️ ',
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      m.name,
-                                      overflow: TextOverflow.ellipsis,
-                                      style:
-                                          theme.textTheme.bodyMedium?.copyWith(
-                                        color: colorScheme.onSurface,
-                                        fontWeight: isActive
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                      ),
-                                    ),
-                                    if (isActive) ...[
-                                      const SizedBox(width: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: colorScheme.tertiaryContainer,
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          'RAM',
-                                          style: theme.textTheme.labelSmall
-                                              ?.copyWith(
-                                            color:
-                                                colorScheme.onTertiaryContainer,
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (newModel) {
-                              if (newModel != null &&
-                                  newModel != selectedModel) {
-                                HapticFeedback.selectionClick();
-                                ref
-                                    .read(chatProvider.notifier)
-                                    .setModel(newModel);
-                                final activeId = ref
-                                    .read(modelManagerProvider)
-                                    .activeLoadedId;
-                                if (activeId != null && activeId != newModel) {
-                                  ref
-                                      .read(modelManagerProvider.notifier)
-                                      .unloadActiveModel();
-                                }
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                loading: () => const Center(
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-                error: (e, s) => Text(
-                  'Error loading models',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.error,
-                  ),
-                ),
-              ),
+        titleWidget: modelsAsync.when(
+          data: (models) {
+            // Keep the selection valid when the model list changes.
+            if (models.isNotEmpty &&
+                !models.any((m) => m.id == selectedModel)) {
+              final fallback = models.first.id;
+              Future.microtask(
+                () => ref.read(chatProvider.notifier).setModel(fallback),
+              );
+            }
+            return ModelPickerChip(
+              models: models,
+              selectedId: selectedModel,
+              activeLoadedId: activeLoadedId,
+              onGetModels: () => context.push('/settings/model-catalog'),
+              onSelected: (newModel) {
+                if (newModel == selectedModel) return;
+                ref.read(chatProvider.notifier).setModel(newModel);
+                final activeId = ref.read(modelManagerProvider).activeLoadedId;
+                if (activeId != null && activeId != newModel) {
+                  ref.read(modelManagerProvider.notifier).unloadActiveModel();
+                }
+              },
+            );
+          },
+          loading: () => const Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
-          ],
+          ),
+          error: (e, s) => Align(
+            alignment: Alignment.centerLeft,
+            child: ActionChip(
+              avatar:
+                  Icon(Icons.error_outline_rounded, color: colorScheme.error),
+              label: const Text('Models unavailable'),
+              tooltip: 'Open model setup',
+              onPressed: () => context.push('/settings/model-catalog'),
+            ),
+          ),
         ),
         actions: [
           Consumer(
@@ -268,38 +146,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
               if (isGenerating && lastTps != null && lastTps > 0) {
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
+                  padding: const EdgeInsets.only(right: 4.0),
                   child: Tooltip(
                     message:
                         'Approximate live output rate based on rendered text',
-                    child: RawChip(
-                      avatar: Icon(
-                        Icons.offline_bolt_rounded,
-                        size: 14,
-                        color: colorScheme.primary,
+                    child: Text(
+                      '≈${lastTps.toStringAsFixed(1)} t/s'
+                      '${lastTtftMs != null ? ' · ${lastTtftMs}ms' : ''}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
                       ),
-                      label: Text(
-                        '≈${lastTps.toStringAsFixed(1)} t/s${lastTtftMs != null ? ' • ${lastTtftMs}ms' : ''}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      backgroundColor: colorScheme.surfaceContainerHighest
-                          .withValues(alpha: 0.5),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                          color: colorScheme.outlineVariant.withValues(
-                            alpha: 0.3,
-                          ),
-                        ),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 0,
-                      ),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
                 );
@@ -307,63 +163,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               return const SizedBox.shrink();
             },
           ),
-          if (activeLoadedId != null)
-            IconButton(
-              icon: Icon(Icons.power_settings_new_rounded,
-                  color: colorScheme.error),
-              tooltip: 'Unload Local Model',
-              onPressed: () {
-                if (ref.read(storageServiceProvider).getSetting(
-                      AppConstants.hapticFeedbackKey,
-                      defaultValue: true,
-                    )) {
-                  HapticFeedback.selectionClick();
-                }
-                ref.read(modelManagerProvider.notifier).unloadActiveModel();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Local GGUF model unloaded from memory.'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-            ),
-          IconButton(
-            icon: const Icon(Icons.photo_library_outlined),
-            tooltip: 'Media Gallery',
-            onPressed: () {
-              final sessionId = ref.read(chatProvider).currentSessionId;
-              final storage = ref.read(storageServiceProvider);
-              if (sessionId == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('No media yet for this chat.'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-                return;
-              }
-              final session = storage.getChatSession(sessionId);
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => MediaGalleryScreen(
-                    chatId: sessionId,
-                    chatTitle: session?.title ?? 'Chat',
-                  ),
-                ),
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.history_rounded),
             tooltip: 'History',
             onPressed: () {
-              if (ref.read(storageServiceProvider).getSetting(
-                    AppConstants.hapticFeedbackKey,
-                    defaultValue: true,
-                  )) {
-                HapticFeedback.selectionClick();
-              }
+              haptic();
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => const ChatHistoryScreen(),
@@ -373,44 +177,55 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           ),
           IconButton(
             icon: const Icon(Icons.add_comment_outlined),
-            tooltip: 'New Chat',
+            tooltip: 'New chat',
             onPressed: () {
-              if (ref.read(storageServiceProvider).getSetting(
-                    AppConstants.hapticFeedbackKey,
-                    defaultValue: true,
-                  )) {
-                HapticFeedback.selectionClick();
-              }
+              haptic();
               ref.read(chatProvider.notifier).newChat();
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.settings_rounded),
-            tooltip: 'Settings',
-            onPressed: () {
-              if (ref.read(storageServiceProvider).getSetting(
-                    AppConstants.hapticFeedbackKey,
-                    defaultValue: true,
-                  )) {
-                HapticFeedback.selectionClick();
+          ChatOverflowMenu(
+            modelLoaded: activeLoadedId != null,
+            onSelected: (action) {
+              haptic();
+              switch (action) {
+                case ChatMenuAction.chatSettings:
+                  showDialog<void>(
+                    context: context,
+                    builder: (context) => const ChatSettingsDialog(),
+                  );
+                case ChatMenuAction.mediaGallery:
+                  final sessionId = ref.read(chatProvider).currentSessionId;
+                  if (sessionId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('No media yet for this chat.'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+                  final session = ref
+                      .read(storageServiceProvider)
+                      .getChatSession(sessionId);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => MediaGalleryScreen(
+                        chatId: sessionId,
+                        chatTitle: session?.title ?? 'Chat',
+                      ),
+                    ),
+                  );
+                case ChatMenuAction.appSettings:
+                  context.push('/settings');
+                case ChatMenuAction.unloadModel:
+                  ref.read(modelManagerProvider.notifier).unloadActiveModel();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Local model unloaded from memory.'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
               }
-              context.push('/settings');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.tune_rounded),
-            tooltip: 'Chat Settings',
-            onPressed: () {
-              if (ref.read(storageServiceProvider).getSetting(
-                    AppConstants.hapticFeedbackKey,
-                    defaultValue: true,
-                  )) {
-                HapticFeedback.selectionClick();
-              }
-              showDialog(
-                context: context,
-                builder: (context) => const ChatSettingsDialog(),
-              );
             },
           ),
         ],
