@@ -18,6 +18,42 @@ class DocumentParseError implements Exception {
   String toString() => cause == null ? message : '$message: $cause';
 }
 
+/// Extracts the text of each page of a PDF.
+///
+/// Kept behind an interface so the PDF engine can be replaced (for example by
+/// a permissively licensed PDFium binding) without touching chunking,
+/// citations or retrieval. Implementations must return one string per page, in
+/// page order, and throw on malformed or encrypted input.
+abstract class PdfTextBackend {
+  List<String> extractPages(List<int> bytes);
+}
+
+/// Default backend: Syncfusion Flutter PDF.
+///
+/// Its license (Syncfusion Community or commercial) is separate from this
+/// project's MIT license; see `docs/DEPENDENCY_LICENSING.md`.
+class SyncfusionPdfTextBackend implements PdfTextBackend {
+  const SyncfusionPdfTextBackend();
+
+  @override
+  List<String> extractPages(List<int> bytes) {
+    final document = PdfDocument(inputBytes: bytes);
+    try {
+      final extractor = PdfTextExtractor(document);
+      return List.generate(
+        document.pages.count,
+        (index) => extractor.extractText(
+          startPageIndex: index,
+          endPageIndex: index,
+        ),
+        growable: false,
+      );
+    } finally {
+      document.dispose();
+    }
+  }
+}
+
 class _ExtractedPage {
   final int number;
   final String text;
@@ -27,12 +63,15 @@ class _ExtractedPage {
 class DocumentIngestionService {
   final Uuid _uuid;
   final ContextBudgetManager _tokenizer;
+  final PdfTextBackend _pdf;
 
   DocumentIngestionService({
     Uuid uuid = const Uuid(),
     ContextBudgetManager? tokenizer,
+    PdfTextBackend pdfBackend = const SyncfusionPdfTextBackend(),
   })  : _uuid = uuid,
-        _tokenizer = tokenizer ?? ContextBudgetManager();
+        _tokenizer = tokenizer ?? ContextBudgetManager(),
+        _pdf = pdfBackend;
 
   Future<List<_ExtractedPage>> _extractPages(
     File file,
@@ -45,24 +84,11 @@ class DocumentIngestionService {
         case '.csv':
           return [_ExtractedPage(1, _decodeText(await file.readAsBytes()))];
         case '.pdf':
-          final bytes = await file.readAsBytes();
-          final document = PdfDocument(inputBytes: bytes);
-          try {
-            final extractor = PdfTextExtractor(document);
-            return List.generate(
-              document.pages.count,
-              (index) => _ExtractedPage(
-                index + 1,
-                extractor.extractText(
-                  startPageIndex: index,
-                  endPageIndex: index,
-                ),
-              ),
-              growable: false,
-            );
-          } finally {
-            document.dispose();
-          }
+          final pages = _pdf.extractPages(await file.readAsBytes());
+          return [
+            for (var index = 0; index < pages.length; index++)
+              _ExtractedPage(index + 1, pages[index]),
+          ];
         default:
           throw DocumentParseError('Unsupported file type: $extension');
       }
