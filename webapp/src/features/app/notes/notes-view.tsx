@@ -236,18 +236,18 @@ export function NotesView() {
 
   const updateDraft = useCallback(
     (patch: Partial<{ title: string; content: string }>) => {
-      setDraft((prev) => {
-        const next = { ...prev, ...patch };
-        if (selectedId) {
-          pendingRef.current = { id: selectedId, ...next };
-        }
-        return next;
-      });
+      // Compute the next draft from current state so the state updater stays
+      // pure (it must not write to refs; StrictMode runs updaters twice).
+      const next = { ...draft, ...patch };
+      setDraft(next);
+      if (selectedId) {
+        pendingRef.current = { id: selectedId, ...next };
+      }
       setSaveState('idle');
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => void saveNow(), AUTOSAVE_DELAY_MS);
     },
-    [selectedId, saveNow]
+    [draft, selectedId, saveNow]
   );
 
   /* ----------------------------- derived ----------------------------- */
@@ -396,19 +396,19 @@ export function NotesView() {
     }
   };
 
-  const editorProps = selectedNote
-    ? {
-        note: selectedNote,
-        title: draft.title,
-        content: draft.content,
-        saveState,
-        onTitleChange: (v: string) => updateDraft({ title: v }),
-        onContentChange: (v: string) => updateDraft({ content: v }),
-        onTogglePin: () => void togglePin(selectedNote),
-        onExport: () => void exportNote(selectedNote),
-        onDelete: () => setDeleteTarget(selectedNote),
-      }
-    : null;
+  const editor = selectedNote ? (
+    <NoteEditor
+      note={selectedNote}
+      title={draft.title}
+      content={draft.content}
+      saveState={saveState}
+      onTitleChange={(v: string) => updateDraft({ title: v })}
+      onContentChange={(v: string) => updateDraft({ content: v })}
+      onTogglePin={() => void togglePin(selectedNote)}
+      onExport={() => void exportNote(selectedNote)}
+      onDelete={() => setDeleteTarget(selectedNote)}
+    />
+  ) : null;
 
   /* ------------------------------ render ---------------------------- */
   const initialLoading = loading && !loadedOnce;
@@ -594,8 +594,8 @@ export function NotesView() {
             className="hidden min-h-0 flex-1 md:block"
             aria-label="Note editor"
           >
-            {editorProps ? (
-              <NoteEditor {...editorProps} />
+            {editor ? (
+              editor
             ) : (
               <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
                 <div className="rounded-2xl bg-muted p-3">
@@ -616,7 +616,7 @@ export function NotesView() {
       </div>
 
       {/* Mobile editor dialog */}
-      <Dialog open={mobileOpen && editorProps !== null} onOpenChange={closeMobileEditor}>
+      <Dialog open={mobileOpen && editor !== null} onOpenChange={closeMobileEditor}>
         <DialogContent className="flex h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
           <DialogHeader className="sr-only">
             <DialogTitle>Edit note</DialogTitle>
@@ -624,7 +624,7 @@ export function NotesView() {
               Changes are saved automatically.
             </DialogDescription>
           </DialogHeader>
-          {editorProps && <NoteEditor {...editorProps} />}
+          {editor}
         </DialogContent>
       </Dialog>
 

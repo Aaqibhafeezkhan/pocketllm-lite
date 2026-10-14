@@ -83,6 +83,16 @@ export function MemoriesView() {
     };
   }, [refresh]);
 
+  const openAdd = useCallback(() => {
+    setEditTarget(null);
+    setDialogOpen(true);
+  }, []);
+
+  const openEdit = useCallback((memory: Memory) => {
+    setEditTarget(memory);
+    setDialogOpen(true);
+  }, []);
+
   // Deep link from the command palette: open this memory's editor
   // once the list has loaded (cross-route navigation).
   const consumedDeepLink = useRef(false);
@@ -169,16 +179,6 @@ export function MemoriesView() {
         return base;
     }
   }, [memories, searchResults, filter]);
-
-  const openAdd = useCallback(() => {
-    setEditTarget(null);
-    setDialogOpen(true);
-  }, []);
-
-  const openEdit = useCallback((memory: Memory) => {
-    setEditTarget(memory);
-    setDialogOpen(true);
-  }, []);
 
   const handleTogglePin = useCallback(async (memory: Memory) => {
     try {

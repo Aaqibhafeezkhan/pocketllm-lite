@@ -89,20 +89,27 @@ export function ChatView({ chatId }: { chatId: string | null }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
-  /** Highest seq present when this chat opened — new messages animate in. */
-  const initialMaxSeq = useRef<number | null>(null);
-
-  // Reset the animation baseline when switching chats.
-  useEffect(() => {
-    initialMaxSeq.current = null;
-  }, [chatId]);
+  /**
+   * Highest seq present when this chat opened — new messages animate in.
+   * Held in state (keyed by chat) so render never reads a ref, and switching
+   * chats naturally invalidates the baseline.
+   */
+  const [animationBaseline, setAnimationBaseline] = useState<{
+    chatId: string | null;
+    seq: number;
+  } | null>(null);
+  const initialMaxSeq =
+    animationBaseline && animationBaseline.chatId === (chatId ?? null)
+      ? animationBaseline.seq
+      : null;
 
   // Capture the baseline once the first (loaded) message list arrives.
   useEffect(() => {
-    if (messages.length > 0 && initialMaxSeq.current === null) {
-      initialMaxSeq.current = messages.reduce((max, m) => Math.max(max, m.seq), 0);
+    if (messages.length > 0 && initialMaxSeq === null) {
+      const seq = messages.reduce((max, m) => Math.max(max, m.seq), 0);
+      setAnimationBaseline({ chatId: chatId ?? null, seq });
     }
-  }, [messages]);
+  }, [messages, initialMaxSeq, chatId]);
 
   // Load chat + subscribe.
   useEffect(() => {
@@ -1148,7 +1155,7 @@ export function ChatView({ chatId }: { chatId: string | null }) {
                   isFirst={index === 0}
                   selected={navIndex === index}
                   animate={
-                    initialMaxSeq.current !== null && m.seq > initialMaxSeq.current
+                    initialMaxSeq !== null && m.seq > initialMaxSeq
                   }
                   branch={
                     branchForMessage && variantIndex >= 0

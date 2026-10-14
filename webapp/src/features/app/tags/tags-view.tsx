@@ -84,6 +84,16 @@ export function TagsView() {
     void load();
   }, [load]);
 
+  const openCreate = () => {
+    setDialogTag(null);
+    setDialogOpen(true);
+  };
+
+  const openEdit = (tag: Tag) => {
+    setDialogTag(tag);
+    setDialogOpen(true);
+  };
+
   // Deep link from the command palette: open this tag's editor once
   // the list has loaded (cross-route navigation).
   const consumedDeepLink = useRef(false);
@@ -143,16 +153,6 @@ export function TagsView() {
   }, [tags, query]);
 
   /* ----------------------------- actions ---------------------------- */
-  const openCreate = () => {
-    setDialogTag(null);
-    setDialogOpen(true);
-  };
-
-  const openEdit = (tag: Tag) => {
-    setDialogTag(tag);
-    setDialogOpen(true);
-  };
-
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     const tag = deleteTarget;

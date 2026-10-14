@@ -39,8 +39,5 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npx next build
-      # Known react-hooks findings are tracked in PROJECT_AUDIT.md; keep the
-      # signal visible without blocking until they are fixed.
       - run: npx eslint src
-        continue-on-error: true
       - run: npm audit --omit=dev --audit-level=critical
