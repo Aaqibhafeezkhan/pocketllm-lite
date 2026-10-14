@@ -7,8 +7,9 @@ compatibility evidence are all valuable contributions.
 ## Good first contributions
 
 - Reproduce a bug on a real Android device and add exact device/runtime details.
-- Improve one of the English, Spanish, Chinese, Japanese, Korean, or Hindi
-  localization resources.
+- Help wire localization into the UI. The English, Spanish, Chinese, Japanese,
+  Korean, and Hindi resource files exist but cover few strings and are not yet
+  used by the screens (see `docs/CONTRIBUTOR_GROWTH.md`, task C-8).
 - Add a focused regression test for a real failure.
 - Improve accessibility, compact-screen behavior, or documentation.
 - Investigate a Cactus model bundle and report measured load behavior without
@@ -20,6 +21,9 @@ labels. If no matching issue exists, open one before a large change so effort is
 not duplicated.
 
 ## Development setup
+
+See [`DEVELOPMENT.md`](DEVELOPMENT.md) for the architecture, the rules that
+keep the privacy boundary true, and where things live. Short version:
 
 Requirements:
 

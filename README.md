@@ -10,7 +10,7 @@
 [![Version](https://img.shields.io/badge/version-1.0.39-6750A4)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-2E7D32.svg)](LICENSE)
 
-[Download](https://github.com/PocketLLM/pocketllm-lite/releases) ·
+[Download APK (v1.0.38)](https://github.com/PocketLLM/pocketllm-lite/releases/tag/v1.0.38) ·
 [Website](https://pocketllm-lite.vercel.app/) ·
 [Quick start](#try-it-in-five-minutes) ·
 [Known limitations](docs/KNOWN_LIMITATIONS.md) ·
@@ -50,17 +50,19 @@
 | Privacy | Strict Offline Mode, network audit log, secure-storage keys, password-derived AES-256-GCM `.pllm` backups with rollback on failed restore |
 | Developer | Authenticated OpenAI-compatible server (`/v1/models`, `/v1/chat/completions` with SSE, `/v1/embeddings`), loopback by default |
 | Lab | Prompt Lab, side-by-side model comparison, on-device benchmarks |
-| UI | Material 3 light/dark, dynamic color, six languages (en, es, zh, ja, ko, hi) |
+| UI | Material 3 light/dark, dynamic color. English only today: translation files for six languages exist but hold 15 strings and are not wired into the UI yet |
 
 Anything not listed here is not claimed. See
 [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) for the honest gaps.
 
 ## Try it in five minutes
 
-1. **Install.** Download the APK for your device from
-   [Releases](https://github.com/PocketLLM/pocketllm-lite/releases)
-   (`arm64-v8a` for most phones from 2017 onward). Android 7.0 (API 24) or
-   newer. Release APKs are currently debug-signed engineering builds, see
+1. **Install.** Download the APK for your device from the
+   [v1.0.38 release](https://github.com/PocketLLM/pocketllm-lite/releases/tag/v1.0.38)
+   (`arm64-v8a` for most phones from 2017 onward; compare the file against
+   `SHA256SUMS.txt`). Android 7.0 (API 24) or newer. v1.0.39 only changed the
+   Web Edition and carries no APK, and GitHub's "latest" badge still points at
+   the older v1.0.35. Release APKs are debug-signed engineering builds, see
    [Known limitations](docs/KNOWN_LIMITATIONS.md).
 2. **Finish onboarding.** It explains the model options and asks you to choose
    your network permissions (update checks and online model browsing are
