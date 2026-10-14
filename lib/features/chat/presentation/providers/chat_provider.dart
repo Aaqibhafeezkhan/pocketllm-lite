@@ -1,3 +1,4 @@
+import '../dialogs/tool_confirmation_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -519,53 +520,11 @@ class ChatNotifier extends Notifier<ChatState> {
               confirmTool: (tool, call) async {
                 final context = rootNavigatorKey.currentContext;
                 if (context == null || !context.mounted) return false;
-                return await showDialog<bool>(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (dialogContext) => AlertDialog(
-                        icon: Icon(
-                          Icons.security_rounded,
-                          color: Theme.of(dialogContext).colorScheme.primary,
-                        ),
-                        title: Text('Allow ${tool.name}?'),
-                        content: SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(tool.description),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Risk: ${tool.riskLevel.name}',
-                                style: Theme.of(dialogContext)
-                                    .textTheme
-                                    .labelLarge,
-                              ),
-                              const SizedBox(height: 8),
-                              SelectableText(
-                                call.arguments.toString(),
-                                style: Theme.of(dialogContext)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(fontFamily: 'monospace'),
-                              ),
-                            ],
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.pop(dialogContext, false),
-                            child: const Text('Deny'),
-                          ),
-                          FilledButton(
-                            onPressed: () => Navigator.pop(dialogContext, true),
-                            child: const Text('Allow once'),
-                          ),
-                        ],
-                      ),
-                    ) ??
-                    false;
+                return ToolConfirmationDialog.show(
+                  context,
+                  tool: tool,
+                  call: call,
+                );
               },
               onToolEvent: (event) async {
                 final content = event.type == GenerationToolEventType.call

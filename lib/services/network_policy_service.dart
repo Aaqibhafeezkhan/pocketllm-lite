@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+
 import '../core/constants/app_constants.dart';
 import '../models/network_audit_log.dart';
 import 'storage_service.dart';
@@ -26,21 +30,37 @@ class NetworkPolicyResult {
 class NetworkPolicyService {
   static final NetworkPolicyService _instance =
       NetworkPolicyService._internal();
+
+  /// Fresh, non-singleton instance for tests and subclasses.
+  @visibleForTesting
+  NetworkPolicyService.test();
   factory NetworkPolicyService() => _instance;
   NetworkPolicyService._internal();
 
   StorageService? _storageService;
   final List<NetworkAuditEntry> _auditLog = [];
+
+  /// Loopback decisions are useful for the current session but are not
+  /// persisted: they never leave the device and would otherwise drown out the
+  /// meaningful entries (every local model request would write storage).
+  final List<NetworkAuditEntry> _loopbackLog = [];
   final StreamController<List<NetworkAuditEntry>> _auditLogController =
       StreamController<List<NetworkAuditEntry>>.broadcast();
 
   Stream<List<NetworkAuditEntry>> get auditLogStream =>
       _auditLogController.stream;
-  List<NetworkAuditEntry> get auditLog => List.unmodifiable(_auditLog);
+  List<NetworkAuditEntry> get auditLog => _mergedLog();
+
+  List<NetworkAuditEntry> _mergedLog() {
+    final merged = [..._auditLog, ..._loopbackLog]
+      ..sort((left, right) => right.timestamp.compareTo(left.timestamp));
+    return List.unmodifiable(merged.take(100));
+  }
 
   void init(StorageService storageService) {
     _storageService = storageService;
     _auditLog.clear();
+    _loopbackLog.clear();
     final raw = storageService.getSetting(
       AppConstants.networkAuditLogKey,
       defaultValue: const [],
@@ -63,12 +83,23 @@ class NetworkPolicyService {
     }
   }
 
+  /// True only for addresses that cannot leave this device: `localhost`
+  /// (and `*.localhost`), the IPv4 127.0.0.0/8 block, and IPv6 `::1`.
+  ///
+  /// `0.0.0.0` is deliberately not loopback. It is the unspecified address, not
+  /// a destination, and treating it as local would let a misconfigured or
+  /// hostile endpoint bypass Strict Offline.
   bool isLoopback(Uri uri) {
-    final host = uri.host.toLowerCase();
-    return host == '127.0.0.1' ||
-        host == 'localhost' ||
-        host == '::1' ||
-        host == '0.0.0.0';
+    var host = uri.host.toLowerCase();
+    if (host.startsWith('[') && host.endsWith(']')) {
+      host = host.substring(1, host.length - 1);
+    }
+    if (host == 'localhost' || host.endsWith('.localhost')) return true;
+    final address = InternetAddress.tryParse(host);
+    if (address == null || address.type == InternetAddressType.unix) {
+      return false;
+    }
+    return address.isLoopback;
   }
 
   bool get isStrictOfflineMode {
@@ -140,6 +171,7 @@ class NetworkPolicyService {
         trigger: trigger,
         infoSent: infoSent,
         allowed: true,
+        persist: false,
       );
       return const NetworkPolicyResult(allowed: true);
     }
@@ -261,6 +293,7 @@ class NetworkPolicyService {
     required String infoSent,
     required bool allowed,
     String? blockReason,
+    bool persist = true,
   }) {
     final entry = NetworkAuditEntry(
       timestamp: DateTime.now(),
@@ -271,11 +304,19 @@ class NetworkPolicyService {
       allowed: allowed,
       blockReason: blockReason,
     );
+    if (!persist) {
+      _loopbackLog.insert(0, entry);
+      if (_loopbackLog.length > 50) {
+        _loopbackLog.removeLast();
+      }
+      _auditLogController.add(_mergedLog());
+      return;
+    }
     _auditLog.insert(0, entry);
     if (_auditLog.length > 100) {
       _auditLog.removeLast();
     }
-    _auditLogController.add(List.unmodifiable(_auditLog));
+    _auditLogController.add(_mergedLog());
     final storage = _storageService;
     if (storage != null) {
       unawaited(

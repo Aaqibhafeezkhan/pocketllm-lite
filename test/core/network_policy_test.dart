@@ -19,10 +19,12 @@ class _PolicyStorage extends StorageService {
 
 void main() {
   late NetworkPolicyService service;
+  late _PolicyStorage storage;
 
   setUp(() {
     service = NetworkPolicyService();
-    service.init(_PolicyStorage({}));
+    storage = _PolicyStorage({});
+    service.init(storage);
   });
 
   test('strict offline blocks every non-loopback operation centrally', () {
@@ -51,9 +53,69 @@ void main() {
   test('isLoopback correctly identifies local endpoints', () {
     expect(service.isLoopback(Uri.parse('http://127.0.0.1:11434')), isTrue);
     expect(service.isLoopback(Uri.parse('http://localhost:11434')), isTrue);
-    expect(service.isLoopback(Uri.parse('http://0.0.0.0:8080')), isTrue);
+    expect(service.isLoopback(Uri.parse('http://[::1]:11434')), isTrue);
+    expect(service.isLoopback(Uri.parse('http://127.0.0.2:8080')), isTrue);
     expect(service.isLoopback(Uri.parse('https://api.github.com')), isFalse);
     expect(service.isLoopback(Uri.parse('https://huggingface.co')), isFalse);
+  });
+
+  test('isLoopback rejects the unspecified address and lookalike hosts', () {
+    for (final raw in [
+      'http://0.0.0.0:8080',
+      'http://[::]:8080',
+      'http://127.0.0.1.evil.example/',
+      'http://localhost.evil.example/',
+      'http://evil-localhost/',
+      'http://192.168.1.10:11434',
+      'http://10.0.0.5/',
+      'http://[::ffff:8.8.8.8]/',
+    ]) {
+      expect(service.isLoopback(Uri.parse(raw)), isFalse, reason: raw);
+    }
+  });
+
+  test('Strict Offline blocks 0.0.0.0 and lookalike hosts', () async {
+    await storage.saveSetting(AppConstants.strictOfflineModeKey, true);
+    for (final raw in [
+      'http://0.0.0.0:11434',
+      'http://127.0.0.1.evil.example/',
+    ]) {
+      final result = service.evaluateConnection(
+        uri: Uri.parse(raw),
+        purpose: ConnectionPurpose.remoteInference,
+        trigger: 'strict_offline_bypass_attempt',
+        infoSent: 'Prompt',
+      );
+      expect(result.allowed, isFalse, reason: raw);
+    }
+  });
+
+  test('loopback decisions are not persisted to the stored audit log', () {
+    service.evaluateConnection(
+      uri: Uri.parse('http://127.0.0.1:11434/api/chat'),
+      purpose: ConnectionPurpose.remoteInference,
+      trigger: 'chat_prompt',
+      infoSent: 'Prompt',
+    );
+    final persisted = storage.getSetting(
+      AppConstants.networkAuditLogKey,
+      defaultValue: const [],
+    ) as List;
+    expect(persisted, isEmpty);
+    // Still visible for the current session.
+    expect(service.auditLog.first.domain, '127.0.0.1');
+
+    service.evaluateConnection(
+      uri: Uri.parse('https://huggingface.co/api/models'),
+      purpose: ConnectionPurpose.modelSearch,
+      trigger: 'model_search',
+      infoSent: 'Search text',
+    );
+    final after = storage.getSetting(
+      AppConstants.networkAuditLogKey,
+      defaultValue: const [],
+    ) as List;
+    expect(after, hasLength(1));
   });
 
   test('loopback requests are allowed regardless of default policy', () {

@@ -52,10 +52,17 @@ class ModelDownloadService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+          // Redirects are followed here, not inside the HTTP adapter, so every
+          // hop (for example huggingface.co to a CDN) is evaluated by the
+          // network policy and appears in the audit log.
+          options.followRedirects = false;
+          final hop = (options.extra[_redirectHopKey] as int?) ?? 0;
           final decision = _networkPolicy.evaluateConnection(
             uri: options.uri,
             purpose: ConnectionPurpose.modelDownload,
-            trigger: 'model_download_transport',
+            trigger: hop == 0
+                ? 'model_download_transport'
+                : 'model_download_redirect_$hop',
             infoSent: 'Requested model file path; no user content',
           );
           if (!decision.allowed) {
@@ -72,8 +79,86 @@ class ModelDownloadService {
           }
           handler.next(options);
         },
+        onResponse: (response, handler) async {
+          if (!_isRedirect(response.statusCode)) {
+            handler.next(response);
+            return;
+          }
+          try {
+            handler.resolve(await _followRedirect(response));
+          } on DioException catch (error) {
+            handler.reject(error);
+          }
+        },
+        onError: (error, handler) async {
+          final response = error.response;
+          if (response == null || !_isRedirect(response.statusCode)) {
+            handler.next(error);
+            return;
+          }
+          try {
+            handler.resolve(await _followRedirect(response));
+          } on DioException catch (redirectError) {
+            handler.reject(redirectError);
+          }
+        },
       ),
     );
+  }
+
+  static const _redirectHopKey = 'pocketllm_redirect_hop';
+  static const _maxRedirects = 5;
+
+  static bool _isRedirect(int? status) =>
+      status == 301 ||
+      status == 302 ||
+      status == 303 ||
+      status == 307 ||
+      status == 308;
+
+  Future<Response<dynamic>> _followRedirect(Response<dynamic> response) async {
+    final request = response.requestOptions;
+    final hop = ((request.extra[_redirectHopKey] as int?) ?? 0) + 1;
+    DioException failure(String message) => DioException(
+          requestOptions: request,
+          response: response,
+          type: DioExceptionType.badResponse,
+          error: NetworkPolicyError(message),
+        );
+    if (hop > _maxRedirects) {
+      throw failure('Model server redirected too many times.');
+    }
+    final location = response.headers.value('location');
+    if (location == null || location.trim().isEmpty) {
+      throw failure('Model server sent a redirect without a location.');
+    }
+    final Uri target;
+    try {
+      target = request.uri.resolve(location.trim());
+    } on FormatException {
+      throw failure('Model server sent an invalid redirect location.');
+    }
+    final scheme = target.scheme.toLowerCase();
+    if (scheme != 'https' &&
+        !(scheme == 'http' && _networkPolicy.isLoopback(target))) {
+      throw failure('Refused a redirect to a non-HTTPS address.');
+    }
+    final headers = Map<String, dynamic>.from(request.headers);
+    if (target.host.toLowerCase() != request.uri.host.toLowerCase()) {
+      // Never forward credentials to a different host (signed CDN URLs).
+      headers.removeWhere((key, _) {
+        final name = key.toLowerCase();
+        return name == 'authorization' || name == 'cookie';
+      });
+    }
+    final next = request.copyWith(
+      path: target.toString(),
+      queryParameters: const <String, dynamic>{},
+      headers: headers,
+      extra: {...request.extra, _redirectHopKey: hop},
+      method: response.statusCode == 303 ? 'GET' : request.method,
+    );
+    return _dio.fetch<dynamic>(next);
   }
 
   Future<String> getModelsDirectory() async {

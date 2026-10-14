@@ -17,6 +17,14 @@ class ToolDefinition {
   final bool requiresConfirmation;
   final ToolRiskLevel riskLevel;
   final String networkScope;
+
+  /// Fixed external host this tool contacts, when it is known up front. Used
+  /// to refuse the call under Strict Offline *before* asking the user, and to
+  /// show the destination in the confirmation dialog.
+  final String? networkHost;
+
+  /// Plain-language description of what leaves the device when it runs.
+  final String? dataSent;
   final String filesystemScope;
   final String deviceScope;
   final Duration timeout;
@@ -30,6 +38,8 @@ class ToolDefinition {
     this.requiresConfirmation = false,
     this.riskLevel = ToolRiskLevel.low,
     this.networkScope = 'none',
+    this.networkHost,
+    this.dataSent,
     this.filesystemScope = 'none',
     this.deviceScope = 'none',
     this.timeout = const Duration(seconds: 15),
@@ -75,13 +85,16 @@ class ToolCallingService {
   final DeviceSpecService _deviceSpecs;
   final AppSecretService _secrets;
   final DeviceToolActionService _deviceActions;
+  final NetworkPolicyService _policy;
 
   ToolCallingService({
     NetworkGateway? network,
     DeviceSpecService? deviceSpecs,
     AppSecretService? secrets,
     DeviceToolActionService? deviceActions,
+    NetworkPolicyService? networkPolicy,
   })  : _network = network ?? NetworkGateway(),
+        _policy = networkPolicy ?? NetworkPolicyService(),
         _deviceSpecs = deviceSpecs ?? DeviceSpecService(),
         _secrets = secrets ?? const AppSecretService(),
         _deviceActions = deviceActions ?? PlatformDeviceToolActionService() {
@@ -244,6 +257,8 @@ class ToolCallingService {
         requiresConfirmation: true,
         riskLevel: ToolRiskLevel.high,
         networkScope: 'user-confirmed-http-navigation',
+        dataSent: 'Nothing is sent by PocketLLM; your browser opens the '
+            'address shown below.',
         deviceScope: 'external-browser',
         handler: (args) async {
           final uri = Uri.tryParse(args['url'] as String);
@@ -299,10 +314,20 @@ class ToolCallingService {
             'query': {
               'type': 'string',
               'description': 'The search query to look up on the internet',
+              'maxLength': 400,
             },
           },
           'required': ['query'],
         },
+        // The query text leaves the device and may be steered by untrusted
+        // document content, so every call is shown to the user first.
+        requiresNetwork: true,
+        requiresConfirmation: true,
+        riskLevel: ToolRiskLevel.medium,
+        networkScope: 'tavily-search-query-text',
+        networkHost: 'api.tavily.com',
+        dataSent: 'The search query below is sent to api.tavily.com. It '
+            'leaves this device.',
         handler: (args) async {
           final query = args['query'] as String? ?? '';
           if (query.trim().isEmpty) return 'Please specify a search query.';
@@ -396,6 +421,12 @@ class ToolCallingService {
       final type = (schema as Map)['type'];
       if (type == 'string' && entry.value is! String) {
         return 'Argument ${entry.key} must be a string';
+      }
+      final maxLength = schema['maxLength'];
+      if (maxLength is int &&
+          entry.value is String &&
+          (entry.value as String).length > maxLength) {
+        return 'Argument ${entry.key} is longer than $maxLength characters';
       }
     }
     return null;
@@ -528,6 +559,18 @@ class ToolCallingService {
         call: call,
         success: false,
         error: 'Tool validation failed: $validation',
+      );
+    }
+    final networkHost = tool.networkHost;
+    if (tool.requiresNetwork &&
+        networkHost != null &&
+        !_policy.isLoopback(Uri.parse('https://$networkHost')) &&
+        _policy.isStrictOfflineMode) {
+      return ToolExecutionResult(
+        call: call,
+        success: false,
+        error: 'Blocked by Strict Offline Mode: ${tool.name} needs '
+            '$networkHost and nothing was sent.',
       );
     }
     if (tool.requiresConfirmation) {
