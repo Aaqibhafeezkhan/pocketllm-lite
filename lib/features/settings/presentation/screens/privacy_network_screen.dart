@@ -26,6 +26,8 @@ class _PrivacyNetworkScreenState extends ConsumerState<PrivacyNetworkScreen> {
   final TextEditingController _ollamaUrlController = TextEditingController();
   final TextEditingController _serverPortController =
       TextEditingController(text: '8080');
+  final TextEditingController _serverOriginsController =
+      TextEditingController();
   List<RemoteProviderConfig> _remoteProviders = const [];
   bool _serverLocalhostOnly = true;
 
@@ -33,6 +35,11 @@ class _PrivacyNetworkScreenState extends ConsumerState<PrivacyNetworkScreen> {
   void initState() {
     super.initState();
     final storage = ref.read(storageServiceProvider);
+    final savedOrigins = storage.getSetting(
+      AppConstants.openAiServerAllowedOriginsKey,
+      defaultValue: '',
+    );
+    if (savedOrigins is String) _serverOriginsController.text = savedOrigins;
     final urlVal = storage.getSetting(
       AppConstants.ollamaBaseUrlKey,
       defaultValue: AppConstants.defaultOllamaBaseUrl,
@@ -276,6 +283,7 @@ class _PrivacyNetworkScreenState extends ConsumerState<PrivacyNetworkScreen> {
   void dispose() {
     _ollamaUrlController.dispose();
     _serverPortController.dispose();
+    _serverOriginsController.dispose();
     super.dispose();
   }
 
@@ -293,14 +301,26 @@ class _PrivacyNetworkScreenState extends ConsumerState<PrivacyNetworkScreen> {
       );
       return;
     }
+    final Set<String> allowedOrigins;
+    try {
+      allowedOrigins = parseAllowedOrigins(_serverOriginsController.text);
+    } on FormatException catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+      return;
+    }
     if (!_serverLocalhostOnly) {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Expose API on the local network?'),
           content: const Text(
-            'Other devices may reach PocketLLM on this port. Keep the API key '
-            'private, use a trusted network, and configure your device firewall.',
+            'Other devices on this network may reach PocketLLM on this port. '
+            'The API uses plain HTTP with no encryption, so the key and your '
+            'prompts are visible to anyone on that network. Use it only on a '
+            'network you trust, keep the API key private, and configure your '
+            'device firewall.',
           ),
           actions: [
             TextButton(
@@ -322,8 +342,13 @@ class _PrivacyNetworkScreenState extends ConsumerState<PrivacyNetworkScreen> {
           enabled: true,
           port: port,
           localhostOnly: _serverLocalhostOnly,
+          allowedOrigins: allowedOrigins,
         ),
       );
+      await ref.read(storageServiceProvider).saveSetting(
+            AppConstants.openAiServerAllowedOriginsKey,
+            allowedOrigins.join(','),
+          );
       if (mounted) setState(() {});
     } catch (error) {
       if (!mounted) return;
@@ -674,6 +699,22 @@ class _PrivacyNetworkScreenState extends ConsumerState<PrivacyNetworkScreen> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _serverOriginsController,
+                    enabled: !localApiServer.isRunning,
+                    keyboardType: TextInputType.url,
+                    decoration: InputDecoration(
+                      labelText: 'Allowed browser origins (optional)',
+                      helperText: 'Comma-separated, for example '
+                          'http://localhost:5173. Empty refuses all browsers; '
+                          'command-line and app clients are unaffected.',
+                      helperMaxLines: 3,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                    ),
                   ),
                   if (localApiServer.isRunning &&
                       localApiServer.activeApiKey != null)

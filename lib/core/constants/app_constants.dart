@@ -1,4 +1,8 @@
 class AppConstants {
+  /// Comma-separated browser origins allowed to call the local API server.
+  static const String openAiServerAllowedOriginsKey =
+      'openai_server_allowed_origins';
+
   static const String appName = 'Pocket LLM Lite';
   static const String defaultOllamaBaseUrl = 'http://127.0.0.1:11434';
 
