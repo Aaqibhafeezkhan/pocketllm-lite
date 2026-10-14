@@ -129,4 +129,11 @@ void main() {
     expect(RegExp(r'launchUrl\(').allMatches(deviceActions), hasLength(1));
     expect(deviceActions, contains("Uri.parse('mailto:"));
   });
+
+  test('web edition does not load runtime fonts from third-party hosts', () {
+    final layout = File('webapp/src/app/layout.tsx').readAsStringSync();
+    expect(layout, isNot(contains('fonts.googleapis.com')));
+    expect(layout, isNot(contains('fonts.gstatic.com')));
+    expect(layout, contains('next/font/google'));
+  });
 }
