@@ -19,6 +19,16 @@ cuts a release.
 
 ### Added
 
+- Share to PocketLLM: send text, links, PDF, TXT, MD and CSV from other apps; review, then Summarize, Ask, or Save to knowledge base. Private inbox, size caps, no automatic fetching, copies deleted on exit.
+- Model bundle validator shared by download, install, scan, load and Whisper detection; "Copy Ollama command" for GGUF repositories.
+- CI secret guard (`scripts/ci/check-secrets.mjs`), `docs/SIGNING_INCIDENT.md`, `docs/SHARE_TO_POCKETLLM.md`, `docs/PHASE_3_EXECUTION_REPORT.md`.
+
+### Fixed
+
+- Catalog models and Whisper bundles were rejected after download because only GGUF layouts were accepted; Cactus bundles (`config.txt` + `.weights`) are now recognised, and GGUF is explained instead of failing.
+
+### Added (earlier in this branch series)
+
 - Onboarding: a "Get your first model" step with device-aware catalog picks,
   real download progress and cancel, and alternatives (own server, GGUF import,
   decide later).
