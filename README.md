@@ -7,10 +7,10 @@
 **A local-first AI chat app for Android. Your models, your documents, your device.**
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter)](https://flutter.dev)
-[![Version](https://img.shields.io/badge/version-1.0.39-6750A4)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.40-6750A4)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-2E7D32.svg)](LICENSE)
 
-[Download APK (v1.0.38)](https://github.com/PocketLLM/pocketllm-lite/releases/tag/v1.0.38) ·
+[Download APK (v1.0.40)](https://github.com/PocketLLM/pocketllm-lite/releases/tag/v1.0.40) ·
 [Website](https://pocketllm-lite.vercel.app/) ·
 [Quick start](#try-it-in-five-minutes) ·
 [Known limitations](docs/KNOWN_LIMITATIONS.md) ·
@@ -41,13 +41,13 @@
 ## What it looks like
 
 Real screenshots from the development build on an Android 14 emulator. These
-show changes on `main` that are not in the v1.0.38 APK yet.
+show the v1.0.40 build.
 
 | First-launch model step | Chat with no model ready | Chat menu |
 | --- | --- | --- |
 | <img src="docs/screenshots/android/android14-emulator-onboarding-first-model.png" width="220" alt="Onboarding step listing ways to get a model: find one for this phone, use your own server, import a GGUF, decide later" /> | <img src="docs/screenshots/android/android14-emulator-chat-no-model.png" width="220" alt="Chat screen with a Set up a model chip, history, new chat and menu actions, and Get a model, Connect a server and Setup guide buttons" /> | <img src="docs/screenshots/android/android14-emulator-chat-overflow-menu.png" width="220" alt="Chat overflow menu with chat settings, media, and app settings" /> |
 
-## What works in v1.0.39
+## What works in v1.0.40
 
 | Area | What you get |
 | --- | --- |
@@ -69,13 +69,12 @@ Anything not listed here is not claimed. See
 ## Try it in five minutes
 
 1. **Install.** Download the APK for your device from the
-   [v1.0.38 release](https://github.com/PocketLLM/pocketllm-lite/releases/tag/v1.0.38)
+   [v1.0.40 release](https://github.com/PocketLLM/pocketllm-lite/releases/tag/v1.0.40)
    (`arm64-v8a` for most phones from 2017 onward; compare the file against
    `SHA256SUMS.txt`). **Only the `arm64-v8a` build contains the on-device model
    runtime.** The `armeabi-v7a` and `x86_64` builds can still use an Ollama or
-   OpenAI-compatible server, OCR and documents, but cannot run on-device models. Android 7.0 (API 24) or newer. v1.0.39 only changed the
-   Web Edition and carries no APK, and GitHub's "latest" badge still points at
-   the older v1.0.35. Release APKs are debug-signed engineering builds, see
+   OpenAI-compatible server, OCR and documents, but cannot run on-device models. Android 7.0 (API 24) or newer. Release APKs are
+   debug-signed engineering builds (same signer as v1.0.13 to v1.0.38), see
    [Known limitations](docs/KNOWN_LIMITATIONS.md).
 2. **Finish onboarding.** It explains the model options and asks you to choose
    your network permissions (update checks and online model browsing are

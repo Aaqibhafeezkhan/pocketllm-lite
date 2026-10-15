@@ -12,10 +12,9 @@ We use a specific versioning pattern:
 - Once the 3rd number reaches 100, the next version resets it to 0 and increments the 2nd number (minor). For example: 1.0.100 becomes 1.1.0.
 - Similarly, 1.1.100 becomes 1.2.0.
 
-## [Unreleased]
+## [1.0.40]
 
-Changes on `claude/quality-growth-pass-2`; no version bump until the maintainer
-cuts a release.
+Quality, security and growth passes 2 and 3.
 
 ### Added
 

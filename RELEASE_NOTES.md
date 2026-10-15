@@ -1,3 +1,19 @@
+# PocketLLM Lite v1.0.40 — Model Loading Fixed, Share to PocketLLM
+
+## Highlights
+
+- **Model download and load errors fixed.** Catalog models and the Whisper bundle were rejected after download because only GGUF layouts were accepted. On-device Cactus bundles are now recognised everywhere; GGUF files are explained, with a copyable `ollama run` command for server use.
+- **Share to PocketLLM.** Send text, links, PDF, TXT, MD or CSV from any app, then Summarize, Ask a question, or Save to the knowledge base. Shared files stay in a private inbox, are size-capped, never fetched automatically, and are deleted when you leave the screen.
+- **First-model onboarding step**, model chip and picker, Notes screen, language picker, opt-in compatibility report, hardened embedded API server, per-hop redirect policy, and a web edition that never fakes a reply.
+
+## Please read
+
+- This APK is **debug-signed**, with the same signer as v1.0.13 to v1.0.38, so it installs over those versions. It is an engineering build, not a production-signed release. See `docs/SIGNING_INCIDENT.md`.
+- Only the `arm64-v8a` APK contains the on-device runtime. On-device token generation has not been verified on a physical phone; it was verified up to model load on an emulator.
+- Share's Summarize and Ask were not exercised with a real model before release.
+
+---
+
 # PocketLLM Lite v1.0.39 — Web Edition Without a Hosted Model
 
 ## Highlights
