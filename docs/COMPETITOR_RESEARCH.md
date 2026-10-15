@@ -101,3 +101,19 @@ breadth, device-compatibility evidence, signed releases, and community size.
 AlternativeTo, F-Droid inclusion criteria, Product Hunt policy and LM Studio,
 Msty, Enclave and Maid were not individually reviewed here. See
 `GROWTH_STRATEGY.md` for channel verification status.
+
+## 6. Pass 2 addendum (2026-10-15)
+
+- Repository facts in section 1 were re-fetched on 2026-10-15 and are the
+  same-day values used in this document.
+- **Distribution architecture:** AI Edge Gallery and PocketPal ship through
+  stores; PocketLLM's per-ABI APKs differ in capability (only `arm64-v8a`
+  contains the on-device runtime), which a store bundle would hide from users.
+- **Awesome lists (verified via GitHub API):** `janhq/awesome-local-ai` has 2,039
+  stars but its last push was 2024-11-13, so a submission may sit unreviewed;
+  `rafska/awesome-local-llm` has 2,967 stars, MIT, last push 2026-10-14 and is
+  the better target. The target repository for the existing `awesome-ollama`
+  draft could not be identified from the draft and one guessed repository
+  returned 404; confirm the exact repository before submitting.
+- Not re-checked: Layla and Private LLM store pages (third-party summaries
+  only), LM Studio, Msty, Enclave.

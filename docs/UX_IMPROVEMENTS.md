@@ -53,3 +53,42 @@ no console messages, and the resource list contains only same-origin requests
 plus one `api.github.com` call (PROJECT_AUDIT O4). Text color on the hero
 measured `rgb(21, 19, 26)` after the reveal transition finished. Lighthouse and
 axe were not run.
+
+## 5. Pass 2 status (2026-10-15)
+
+Evidence below comes from the real app on an Android 14 emulator
+(`docs/screenshots/android`) and the production web build
+(`docs/screenshots/web`). No physical phone was available.
+
+| # | Status | Change |
+| --- | --- | --- |
+| U1 | **Done** | Onboarding gained a fourth step, "Get your first model": measured RAM and storage drive up to three catalog choices, a confirmed download shows real progress with cancel, and the installed model becomes the default. Alternatives: own server, GGUF import, decide later. Nothing is requested from the network until the user taps Find models. First-chat setup time was **not** measured, so no time target is claimed |
+| U2 | **Done** | Chat top bar is a model chip, History, New chat and an overflow menu (settings, media, app settings, unload). Verified at 360 dp with a very long model name at 100%, 130% and 200% text |
+| U3 | **Done** | Disclaimer is one line at 12 sp in `onSurfaceVariant` with a 40 dp target and a label |
+| U4 | **Partly done** | Suggestions are text-model tasks and the no-model state offers Get a model / Connect a server / Setup guide. Suggestions are still static, not derived from enabled capabilities |
+| U5 | **Done** | See audit O14 |
+| U6 | **Partly done** | Large-text tests now cover the onboarding step, top bar, tool confirmation and notes. Other screens remain unchecked |
+| U7 | Open | Store art still shows the old UI |
+| U8 | Open | `customization_screen.dart` colours not reviewed |
+
+### New in pass 2
+
+- Web: a Connect-a-model card with setup steps replaces silent canned replies;
+  the composer is disabled with an explanation; demo mode is opt-in and every
+  scripted reply carries a visible label.
+- Language picker (Settings): device default plus six languages; non-English
+  entries say "Translation not yet reviewed".
+- Notes screen (Settings > Notes): read, edit, copy, delete.
+- Tool confirmation dialog shows where data goes and the exact arguments.
+- Benchmark screen: "Copy compatibility report" with an explicit privacy line.
+
+### Observed and not fixed
+
+- On the real onboarding screenshot the "Get Started" button text is pale
+  against the button colour. It was captured after a 3.5 s pause, so it is not
+  an animation frame; a contrast check of that button in both themes is the
+  next step.
+- Android: the first-model step has no inline storage-permission or
+  low-storage flow beyond hiding models that cannot fit.
+- Web: while no model is connected the home view shows suggestion chips as
+  disabled rather than hiding them.

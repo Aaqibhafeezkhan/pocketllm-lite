@@ -171,3 +171,50 @@ Pin one post: "How to report a model that does not load".
   like the ones above.
 - **Metrics:** the weekly snapshot from `scripts/growth_report.mjs`: merged PRs,
   first-time contributors, median time to first response.
+
+## 6. Status after pass 2 (2026-10-15)
+
+Do not open issues for tasks marked Done. Open the ones marked Open or Partly,
+a few at a time.
+
+| Task | Status | Evidence |
+| --- | --- | --- |
+| C-1 ESLint react-hooks | **Done** | `npx eslint src` exits 0; CI lint is blocking |
+| C-2 Note manager | **Done** | `notes_screen.dart`, storage update/delete, tests |
+| C-3 Loopback audit noise | **Done** | not persisted; 0.0.0.0 not loopback; tests |
+| C-4 Compatibility report form | **Done** | issue form, in-app report copy, `compatibility_report_test.dart` |
+| C-5 Redirect-aware audit | **Done** | download service and gateway per-hop evaluation |
+| C-6 Server allow-lists | **Done (origins, hosts)** | Origin allow-list, Host check, preflight, UI field. A trusted client-address list is not implemented |
+| C-7 `finish_reason` length | **Partly done** | Non-streaming from measured counts; streaming has no measured count, so it still reports `stop` |
+| C-8 Wire localization | **Partly done** | Infrastructure, picker, persistence, core strings. Screen-by-screen extraction and reviewed translations remain: good Starter tasks |
+| C-9 RAG evaluation corpus | **Done** | `test/fixtures/rag_eval`, `rag_eval_test.dart`. Semantic and hybrid evaluation needs an embedding runtime and is Open |
+| C-10 TalkBack and large text | **Partly done** | Large-text tests for four screens; a TalkBack walkthrough is Open and needs a device |
+| C-11 Build-time releases | **Done** | `fetch-releases.mjs`, snapshot, tests |
+| C-12 No canned replies | **Done** | sandbox gate, connect card, opt-in demo mode, Playwright |
+
+### Suggested next batch (new, scoped)
+
+1. **Extract strings for the chat input** to ARB keys (Starter; `chat_input.dart`
+   is 1,700 lines, split by widget; acceptance: no English literals in the
+   extracted widget, plus a locale test).
+2. **Review the Spanish ARB file** with a native speaker and flip `reviewed`
+   (Starter, needs a speaker).
+3. **Contrast check of every primary button in light and dark themes** with a
+   widget test using `meetsGuideline(textContrastGuideline)` (Starter).
+4. **Replace-or-keep spike for `syncfusion_flutter_pdf`**: implement
+   `PdfTextBackend` with a permissive engine and compare on the PDF fixtures
+   (Advanced).
+5. **llamadart adapter spike behind `InferenceService`** per
+   `DEPENDENCY_LICENSING.md` (Advanced, needs an arm64 device).
+6. **Streaming `finish_reason`**: expose a measured completion count from the
+   pipeline's final event (Intermediate).
+7. **Trusted client-address allow-list for the embedded server** (Intermediate).
+8. **Dart dependency vulnerability check**: add a documented, non-blocking CI
+   step using OSV-Scanner against `pubspec.lock` (Starter; verify the scanner's
+   current Dart support first).
+
+### Labels
+
+`.github/labels.yml` defines the label set (area, difficulty, status,
+compatibility). Sync it with a label-sync action or `gh label create` from the
+file; it was not applied to the live repository in this pass.

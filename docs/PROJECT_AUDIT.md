@@ -108,3 +108,40 @@ this pass. These remain unverified and are not claimed: on-device inference
 quality and speed, first-token latency, peak RAM, battery, Whisper accuracy,
 OCR on real photos, reminder delivery, low-RAM behavior, and upgrade
 preservation. See [`QA_TEST_REPORT.md`](QA_TEST_REPORT.md).
+
+## 5. Status after pass 2 (2026-10-15)
+
+Pass 2 revalidated every open item against the code, fixed what did not need
+the maintainer, and recorded what it could not. Details and evidence are in
+`PHASE_2_EXECUTION_REPORT.md`.
+
+| ID | Status | What happened |
+| --- | --- | --- |
+| O1 | Open, mitigated | GitHub "latest" is still v1.0.35 and v1.0.39 still has no APK. README and the site now point at the newest release that has an APK (v1.0.38). Needs maintainer: attach APKs to a proper latest release |
+| O2 | Open, blocked | No production key. Signing workflow, fail-closed Gradle, verification script and transition guide are ready (`RELEASE_SIGNING.md`). Needs maintainer credentials |
+| O3 | **Fixed** | `web_search` is a medium-risk network tool, always confirmed, 400-character limit, refused under Strict Offline before prompting; the confirmation dialog shows destination, data sent and exact arguments. Tests: 6 service tests, 3 widget tests |
+| O4 | **Fixed** | Marketing site reads a build-time release snapshot; Playwright asserts no third-party requests |
+| O5 | **Fixed** | `npm audit --omit=dev`: 9 to 0. Unused vulnerable dependencies removed rather than upgraded; `sharp` upgraded. See `DEPENDENCY_LICENSING.md` |
+| O6 | **Fixed** | Redirects are followed by the download service and `NetworkGateway.get`, so every hop is policy-checked and audited; HTTPS-to-HTTP refused, hop cap, credentials dropped cross-host. Tests for both |
+| O7 | **Fixed** | `0.0.0.0` is no longer loopback; loopback decisions are not persisted. Tests |
+| O8 | **Fixed** | Server also listens on `[::1]` (test skipped only where the host has no IPv6) |
+| O9 | **Partly fixed** | Non-streaming `finish_reason` is `length` only on a runtime-measured token cap. Streaming still reports `stop` because no measured count is available |
+| O10 | **Fixed** | All seven react-hooks errors resolved without suppression; ESLint is a blocking CI step |
+| O11 | Open | Store art not re-shot. Real emulator screenshots of the new flow are in `docs/screenshots/android` and can be used |
+| O12 | Open | Repository description and topics need the owner; proposed text is in `docs/marketing/LAUNCH_ASSETS.md` |
+| O13 | Assessed | Backend strategy and spike criteria in `DEPENDENCY_LICENSING.md`; nothing rewritten. Discontinued Dart package still not identified |
+| O14 | **Fixed** | Web edition no longer answers with scripted text unless the user opts in; replies are labelled in-thread; settings migration; Playwright tests |
+| O15 | Assessed | Syncfusion terms verified from the vendor pages; engine moved behind `PdfTextBackend`. Needs maintainer registration decision |
+| O16 | **Partly fixed** | Delegates, locale persistence and a language picker are wired; core strings use `AppLocalizations`; other locales fall back to English and are marked unreviewed. Most screens still hard-code English |
+
+### New findings in pass 2
+
+| ID | Sev | Finding | Status |
+| --- | --- | --- | --- |
+| O17 | **P0** | A signing keystore (`upload-keystore.jks`) was committed on 2025-12-29 and remains in the public history of `origin/main`; `android/key.properties.bak` was tracked until this pass. Contents were deliberately not read, so whether real passwords were exposed is unknown | `key.properties.bak` untracked, ignore rules and a regression test added. **Needs maintainer**: assess and retire the key, create a new one (`RELEASE_SIGNING.md`) |
+| O18 | P1 | The Cactus runtime is packaged for `arm64-v8a` only. The `armeabi-v7a` and `x86_64` APKs cannot run local models, but the site and README presented them as general downloads | Labels and README corrected; documented in `KNOWN_LIMITATIONS.md` |
+| O19 | P2 | The web edition probed `127.0.0.1:11434` on every load even with no provider configured, producing console errors and an unsolicited local request | Fixed; Playwright test |
+| O20 | P2 | Several settings and views defaulted new work to the scripted sandbox runtime | Fixed with O14 |
+| O21 | P3 | `bun.lock` is stale against `package-lock.json` | Open; CI uses npm |
+| O22 | P3 | Dev-only advisory chain (`eslint-config-next` > `braces`) with no non-downgrade fix | Accepted, documented |
+| O23 | P3 | Coverage: 58.3% of the 7,199 instrumented lines in the 92 files tests load (147 source files exist); services 57.4%, core 80.3%, features 65.8% (of loaded files). `local_inference_service.dart` and `audio_recording_service.dart` are at 0 to 1% | Measured; no gate added |

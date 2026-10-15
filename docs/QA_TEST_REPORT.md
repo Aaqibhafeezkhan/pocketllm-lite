@@ -91,3 +91,61 @@ A short list a contributor with a phone can run and report (see
    receives an `error` event and `[DONE]`.
 5. Export an encrypted backup, uninstall, reinstall, restore: chats, documents
    and settings present; wrong password is rejected.
+
+## 6. Pass 2 results (2026-10-15)
+
+Environment: Windows 11 host, Flutter 3.41.9 / Dart 3.11.5, Node 24.14.1,
+Next.js 16.4.1, Playwright 1.64 (Chromium headless shell), Android emulator
+`siderea_api34` (Android 14, x86_64, WHPX).
+
+| Command | Result |
+| --- | --- |
+| `dart format --output=none --set-exit-if-changed .` | pass, 226 files |
+| `flutter analyze` | no issues |
+| `flutter test --coverage` | **227 passed, 0 failed** (pass 1: 151) |
+| `flutter build apk --debug --target-platform android-x64` | pass, 3 m 47 s |
+| `flutter build apk --release --target-platform android-x64` | pass, 80.7 MB, debug-signed |
+| `flutter test integration_test/core_flows_test.dart -d emulator-5554` | **6 / 6 passed** on Android 14 (PDF pages and citations, encrypted backup, Android OCR via ML Kit, memory, tools, pipeline harness) |
+| `flutter test integration_test/app_flow_test.dart -d emulator-5554` | **1 / 1 passed**: fresh install, onboarding to the first-model step to chat, overflow menu |
+| `cd webapp && npx tsc --noEmit` | pass |
+| `cd webapp && npx eslint src e2e` | pass (0 errors; pass 1: 7) |
+| `cd webapp && npx vitest run` | 9 / 9 passed |
+| `cd webapp && npx next build` | pass, TypeScript validated |
+| `cd webapp && npx playwright test` (desktop + mobile) | **7 / 7 passed** |
+| `cd webapp && npm audit --omit=dev` | 0 vulnerabilities (pass 1: 9) |
+| `cd webapp && npm ci` | not re-run from a clean checkout in this pass; `npm install` kept the lockfile in sync and CI runs `npm ci` |
+
+### Coverage (measured, with its limits)
+
+`flutter test --coverage` instruments only files that tests import: 92 of 147
+source files, 7,199 executable lines. Of those, **58.3%** are hit (services
+57.4%, core 80.3%, features 65.8%). Files never imported by a test, which
+includes many UI screens, are not in the denominator, so this overstates
+whole-app coverage. Lowest services: `local_inference_service.dart` 0%,
+`audio_recording_service.dart` 1%, `rag_service.dart` 10%,
+`audio_transcription_service.dart` 24%, `update_service.dart` 30%,
+`model_download_service.dart` 42%.
+
+### What the emulator runs prove, and what they do not
+
+| Proven on a real Android 14 runtime | Not proven |
+| --- | --- |
+| The real app starts from a fresh install, shows onboarding, the new first-model step and the compact chat bar | On-device model inference (the Cactus library is `arm64-v8a` only; no arm64 device was available) |
+| PDF ingestion with page citations, encrypted backup rejection/restore, ML Kit OCR on generated images | Whisper, microphone capture, reminders and OEM background behavior |
+| Cold start about 2.4 s median and 117 MB PSS at onboarding (emulator, see `PERFORMANCE.md`) | Download of a real catalog model end to end on a device |
+| | Upgrade over an existing install and uninstall/reinstall/restore on hardware |
+
+The "local model loads, streams through the pipeline" integration case uses an
+injected backend harness, not real weights. It verifies the pipeline, not a
+model.
+
+### New tests added in pass 2
+
+| Area | Tests |
+| --- | --- |
+| Network policy and redirects | loopback rules (0.0.0.0, lookalike hosts, IPv6), Strict Offline bypass attempts, persisted-log filtering, download-service redirect cases (follow, blocked hop, downgrade, loop), gateway redirect cases (blocked hop, credential drop, downgrade) |
+| Tools | `web_search` classification, denial and missing confirmer, Strict Offline pre-block, oversized query, injected extra argument, confirmed request body; confirmation dialog widget tests including 130% text scale |
+| Embedded API | Host rebinding, origin allow-list, preflight, auth header, unauthenticated flood limit, malformed JSON, body and generation timeouts (408/504, SSE timeout event), `finish_reason`, IPv6, origin parser |
+| Documents | PDF page order and citations on a generated three-page PDF, backend swap, no-text PDF, malformed PDF; RAG evaluation corpus (hit@3 1.00, MRR 1.00 on a synthetic corpus) |
+| UX | onboarding page (device-aware list, failure and retry, download progress, cancel, alternatives, 130% text), chat top bar and sheet (360 dp at 100/130/200%), notes screen, language picker, locale fallback |
+| Privacy | compatibility-report allow-list, no-committed-secrets guard; web: no third-party origins, no localhost probe, no scripted reply without opt-in |
