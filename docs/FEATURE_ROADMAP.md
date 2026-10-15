@@ -56,3 +56,34 @@ maintenance. Items marked "blocked" need something this environment did not have
 Hosted inference, accounts or sync, ads or analytics SDKs, a user-generated
 persona marketplace, automatic task-based model routing, and unverified
 "supported model" lists.
+
+## Status after pass 2 (2026-10-15)
+
+| # | Item | Status |
+| --- | --- | --- |
+| 1 | Installable, trustworthy release | **Blocked on maintainer.** Workflow, fail-closed signing, verification and transition guide done; no key or release created. A P0 key-hygiene finding (audit O17) must be resolved first |
+| 2 | Fresh store art, GitHub description and topics | **Partly.** Real emulator screenshots captured; text for description, topics and release notes drafted in `docs/marketing/LAUNCH_ASSETS.md`. Applying them needs the owner |
+| 3 | Compatibility matrix | **Tooling done, data missing.** In-app report copy, issue form and cold-start script exist; no arm64 phone was available, so no matrix rows were produced |
+| 4 | Web: no canned replies by default | **Done** |
+| 5 | `web_search` classification and confirmation | **Done** |
+| 6 | Server trusted hosts and CORS | **Done** for Host and Origin; client-address list not done |
+| 7 | Note manager screen | **Done** |
+| 8 | Redirect-aware audit, loopback noise | **Done** |
+| 9 | Build-time release fetch | **Done** |
+| 10 | Wire localization | **Partly** (infrastructure, picker, core strings) |
+| 11 | Shareable benchmark export | **Done** as a clipboard report (no upload, no file) |
+| 12 | Backend contingency study | **Assessed**, spike criteria written; no spike run (needs an arm64 device) |
+| 13 | RAG evaluation set | **Done** for keyword retrieval |
+| 14 | Accessibility pass | **Partly** (large-text tests for four screens; TalkBack walkthrough needs a device) |
+
+### Re-ranked next priorities
+
+1. **Resolve audit O17 and create a production key** (maintainer; P0).
+2. **Run the compatibility matrix on three real arm64 phones** and commit the
+   results; this unblocks honest "works on" claims and the backend decision.
+3. **Fix the release surface** (latest release with a verified, signed APK).
+4. **Finish localization** screen by screen with reviewed translations.
+5. **Backend spike** (`llamadart`) on a device, then decide on a second adapter.
+6. **Replace or register the PDF dependency** (Syncfusion terms).
+7. **Trusted client-address allow-list and streaming `finish_reason`.**
+8. **Dart dependency vulnerability scanning in CI.**

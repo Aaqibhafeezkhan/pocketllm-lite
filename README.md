@@ -36,6 +36,15 @@
 - **No ads, no analytics, no tracking SDKs.** A regression test in
   [`test/regressions`](test/regressions) fails the build if they appear.
 
+## What it looks like
+
+Real screenshots from the development build on an Android 14 emulator. These
+show changes on `main` that are not in the v1.0.38 APK yet.
+
+| First-launch model step | Chat with no model ready | Chat menu |
+| --- | --- | --- |
+| <img src="docs/screenshots/android/android14-emulator-onboarding-first-model.png" width="220" alt="Onboarding step listing ways to get a model: find one for this phone, use your own server, import a GGUF, decide later" /> | <img src="docs/screenshots/android/android14-emulator-chat-no-model.png" width="220" alt="Chat screen with a Set up a model chip, history, new chat and menu actions, and Get a model, Connect a server and Setup guide buttons" /> | <img src="docs/screenshots/android/android14-emulator-chat-overflow-menu.png" width="220" alt="Chat overflow menu with chat settings, media, and app settings" /> |
+
 ## What works in v1.0.39
 
 | Area | What you get |

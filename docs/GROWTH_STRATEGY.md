@@ -210,3 +210,42 @@ unqualified "private AI" claims, so this asks for data and states limits.
 - Weekly report template: run the script, paste the table, add three lines:
   what shipped, what users reported, what we will do next week.
 - Never equate stars or downloads with active users in any public statement.
+
+## 10. Pass 2 revalidation (2026-10-15)
+
+### Channel requirements, re-checked today
+
+| Channel | Verified now | Source | Consequence for us |
+| --- | --- | --- | --- |
+| Show HN | Must be something people can run or hold; not landing pages, sign-up pages or minor releases; title starts "Show HN"; easy to try, ideally without sign-up; do not ask friends to upvote | [Show HN rules](https://news.ycombinator.com/showhn.html) | An APK is more friction than a browser tab. The Web Edition needs a model endpoint, so it is also not zero-friction. Best timing is after a signed release and a short demo exist |
+| Product Hunt | Free; makers submit their own products; use a personal account; you may not ask people to upvote (ask them to visit and comment); launch assets are in a separate checklist that was not readable | [launch guide](https://www.producthunt.com/launch) | Needs a store-like listing and a demo video first |
+| DEV Community | Content must not be "designed primarily for the purposes of promotion or creating backlinks"; posts need substantial content | [terms, section 11](https://dev.to/terms) | Publish the architecture article, with the project as the worked example |
+| Hashnode | No standalone self-promotion rule; the acceptable-use policy bars "unsolicited promotional content" and engagement manipulation | [terms](https://hashnode.com/terms) | Same article, cross-posted once, with a canonical link |
+| Hugging Face | Spam (advertising products, bulk activity) and manipulating Hub metrics are prohibited; posts about tools are moderated case by case | [content policy](https://huggingface.co/content-policy) | Do not post promotions in model discussions. A compatibility note on a specific model's page is acceptable only when it is genuinely about that model |
+| F-Droid | Apps must be FOSS; proprietary dependencies are barred; the build toolchain must be FLOSS; undisclosed anti-features are rejected | [inclusion policy](https://f-droid.org/docs/Inclusion_Policy/) | Not eligible today: Syncfusion PDF is non-free and Cactus has an unknown license. Revisit after the PDF engine is replaced and the backend license is clear |
+| AlternativeTo | Submission requires an account; rules page not readable without signing in | [add page](https://alternativeto.net/software/add/) | Prepare the description and screenshots; read the rules after signing in |
+| Indie Hackers | Rules page returned HTTP 403 | n/a | Unverified |
+| r/LocalLLaMA | Reddit is blocked from this environment | n/a | Unverified: read the sidebar rules and flair requirements before posting, and disclose authorship |
+| Awesome lists | `janhq/awesome-local-ai`: last push 2024-11-13, 2,039 stars. `rafska/awesome-local-llm`: last push 2026-10-14, 2,967 stars, MIT | GitHub API | Prefer the active list; re-read its contribution rules before opening a PR |
+
+### What changed in positioning
+
+- Do not describe the three APKs as interchangeable: only `arm64-v8a` runs local
+  models (`KNOWN_LIMITATIONS.md`).
+- The strongest verifiable claims today are: a visible, testable network
+  boundary (Playwright and unit tests assert no third-party requests and no
+  unsolicited local probes), citations that name page or section, and a local
+  API with Host and Origin enforcement. State test coverage, not superlatives.
+- The honest weak points to volunteer in every post: debug-signed APKs,
+  no phone benchmark matrix yet, archived inference SDK, partial localization.
+
+### Baseline metrics (public, 2026-10-15 UTC)
+
+Unchanged from section 3 except: PRs merged in the last 7 days 1 (pass 1,
+PR #360), release asset downloads 1,573 across all releases. Stars 22, forks 2,
+contributors 2. These are observations, not targets.
+
+### Ready-to-use material
+
+All drafts, with the verification status of each claim, are in
+`docs/marketing/LAUNCH_ASSETS.md`. Nothing has been posted or submitted.
