@@ -87,7 +87,7 @@ validation, cleanup and UI paths. It does not verify model output.
 | Real file shared from the system Files app (granted `content://`) | Copied to `cache/shared_inbox/<uuid>/`, preview shows name and size (`share-file.png`). |
 | Leaving the share screen | `cache/shared_inbox` was empty afterwards. |
 | `content://` URI with no grant (`adb` cannot grant media access) | Refused as "The sending app denied access to the file"; nothing left in the inbox (`share-denied.png`). |
-| Nonexistent `content://` item | Refused with a plain message; no raw exception text shown. |
+| Nonexistent `content://` item | The first build showed a raw `FileNotFoundException` string in the refusal. The handler now returns a fixed message ("The sending app no longer has this file"); this exact case was not re-run after the fix. |
 
 Not exercised on device: `ACTION_SEND_MULTIPLE`, PDF extraction, the 25 MB cap,
 and the Summarize/Ask path with a real model (no arm64 inference available

@@ -100,7 +100,7 @@ continues the action the user originally requested.
 
 ## Complete capability summary
 
-- Local GGUF chat through the pinned Cactus runtime, user-configured Ollama, and
+- Local chat with Cactus-format model bundles through the pinned Cactus runtime, user-configured Ollama, and
   generic OpenAI-compatible providers.
 - Streaming chat, persisted history, per-chat sampling/system prompts, personas,
   templates, prompt enhancement, Prompt Lab, comparison, cancellation, and

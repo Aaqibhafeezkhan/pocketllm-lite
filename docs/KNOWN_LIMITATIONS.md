@@ -2,7 +2,7 @@
 
 Applies to PocketLLM Lite v1.0.38.
 
-- Local model compatibility, quality, speed, and memory use depend on the exact file, quantization, context, backend, device, and thermal state. A valid GGUF header is not a compatibility guarantee.
+- Local model compatibility, quality, speed, and memory use depend on the exact file, quantization, context, backend, device, and thermal state. On-device inference loads only Cactus-format bundles (`config.txt` plus `.weights`). GGUF files are recognised and explained but cannot be loaded; use Ollama or another OpenAI-compatible server for them.
 - Automatic task-based model routing and hardcoded model-family profiles were removed. Model switching is manual until verified manifests and measured load results can support reliable routing.
 - Image attachment is available only when the selected local manifest or configured remote provider explicitly confirms vision input. Ollama's tags response does not establish this capability, so PocketLLM fails closed there.
 - Android device telemetry measures RAM, storage, ABI, CPU cores, battery, and thermal status where APIs expose them. Cross-vendor GPU/NPU evidence and several iOS measurements remain unavailable and display as unknown.
@@ -22,5 +22,5 @@ Applies to PocketLLM Lite v1.0.38.
 - Legacy plaintext JSON import remains for compatibility. New `.pllm` backups use authenticated encryption and application-level rollback, but an OS/process kill during low-level file replacement cannot provide a database-wide ACID guarantee.
 - No production Android signing key is configured in this checkout. A release-mode debug-signed artifact may be used for engineering verification and an explicitly labeled GitHub pre-release only; it is not a production-signed upgrade.
 - Physical-phone local inference, Whisper quality, reminder delivery, Bluetooth/audio behavior, low-memory pressure, and upgrade preservation were not available for final verification.
-- The Cactus native runtime (`libcactus.so`) is packaged for `arm64-v8a` only. Verified in the built release APK on 2026-10-15: the `armeabi-v7a` and `x86_64` APKs contain no Cactus library, so they cannot run local GGUF models (remote servers, OCR and document features are unaffected). This also means on-device inference cannot be exercised on the x86_64 Android emulator.
+- The Cactus native runtime (`libcactus.so`) is packaged for `arm64-v8a` only. Verified in the built release APK on 2026-10-15: the `armeabi-v7a` and `x86_64` APKs contain no Cactus library, so they cannot run on-device models (remote servers, OCR and document features are unaffected). This also means on-device inference cannot be exercised on the x86_64 Android emulator.
 - Localization: translation resource files exist for six languages but cover only a few core strings; everything else is English. Non-English entries are marked as not yet reviewed in the language picker.

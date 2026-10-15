@@ -22,9 +22,11 @@
 
 ## Why PocketLLM Lite
 
-- **It actually runs on your phone.** GGUF models run on-device through the
+- **It actually runs on your phone.** Cactus-format model bundles (the in-app
+  catalog downloads these) run on-device through the
   [Cactus](https://github.com/cactus-compute/cactus) runtime. No account and no
-  hosted inference.
+  hosted inference. GGUF files are not loadable on-device; use them through
+  Ollama or another OpenAI-compatible server.
 - **You decide when the network is used.** Every app-managed connection goes
   through one policy gateway with a visible audit log. *Strict Offline Mode*
   blocks all non-loopback traffic from the app.
@@ -50,7 +52,7 @@ show changes on `main` that are not in the v1.0.38 APK yet.
 | Area | What you get |
 | --- | --- |
 | Chat | Streaming local chat, persistent history, branches, tags, personas, prompts, skills, per-chat system prompts |
-| Models | Hugging Face GGUF search, gated-repo token support, resumable verified downloads, local file import, device-aware recommendations |
+| Models | On-device Cactus catalog, Hugging Face GGUF search for server use (with a copyable `ollama run` command), gated-repo token support, resumable verified downloads, local folder import, device-aware recommendations |
 | Documents | PDF/TXT/MD/CSV ingestion, keyword / semantic / hybrid retrieval, source-aware answers |
 | Vision & OCR | Android on-device OCR (ML Kit Latin). Image input only when the selected model confirms vision support |
 | Voice | On-device Whisper transcription via a guided, checksum-verified model install; text-to-speech |
@@ -71,7 +73,7 @@ Anything not listed here is not claimed. See
    (`arm64-v8a` for most phones from 2017 onward; compare the file against
    `SHA256SUMS.txt`). **Only the `arm64-v8a` build contains the on-device model
    runtime.** The `armeabi-v7a` and `x86_64` builds can still use an Ollama or
-   OpenAI-compatible server, OCR and documents, but cannot run local GGUF models. Android 7.0 (API 24) or newer. v1.0.39 only changed the
+   OpenAI-compatible server, OCR and documents, but cannot run on-device models. Android 7.0 (API 24) or newer. v1.0.39 only changed the
    Web Edition and carries no APK, and GitHub's "latest" badge still points at
    the older v1.0.35. Release APKs are debug-signed engineering builds, see
    [Known limitations](docs/KNOWN_LIMITATIONS.md).
@@ -92,7 +94,7 @@ Memory is the limit. As a rule of thumb, the model file plus its context cache
 must fit in free RAM with headroom for Android itself. PocketLLM recommends
 conservatively and shows `unknown` when the device does not expose a
 measurement. Compatibility depends on the exact file, quantization, device, and
-thermal state; a valid GGUF header is not a guarantee. Reports with device and
+thermal state, and PocketLLM loads only Cactus-format bundles, never GGUF. Reports with device and
 model details are very welcome (see [Contributing](#contributing)).
 
 ## Privacy model in one paragraph
