@@ -1,0 +1,48 @@
+name: Device and model compatibility report
+description: Tell us whether a model loads and runs on your phone. Reports like this are the most useful contribution you can make.
+title: "[compat] <device> / <model>"
+labels: ["compatibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you. Please only report what you actually ran. "It crashed on load" is a valuable result.
+
+        In the app: **Settings > System, Benchmark & Updates > Benchmark**, run a test, then tap **Copy compatibility report** and paste it below. The report contains hardware facts and speed figures only: no prompts, outputs or personal identifiers. Nothing is uploaded by the app.
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: What happened
+      options:
+        - Loaded and answered correctly
+        - Loaded but output was wrong or garbled
+        - Loaded but far too slow to use
+        - Failed to load (error shown)
+        - App crashed or was killed
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device model
+      description: Marketing name is fine, for example "Pixel 8" or "Galaxy A34".
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model, file and quantization
+      description: Repository, file name and quantization if known, for example "bartowski/Llama-3.2-1B-Instruct-GGUF, Q4_K_M".
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Compatibility report
+      description: Paste the report copied from the app, if you could run a benchmark.
+      render: markdown
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Error text, how long loading took, whether other apps were open, thermal throttling you noticed.

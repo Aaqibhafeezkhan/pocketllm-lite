@@ -11,7 +11,9 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/widgets/m3_app_bar.dart';
 import '../../../../core/widgets/m3_empty_state.dart';
 import '../../../../services/inference_service.dart';
+import '../../../../services/compatibility_report.dart';
 import '../../../../services/device_spec_service.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../chat/presentation/providers/models_provider.dart';
 
 class BenchmarkRun {
@@ -785,6 +787,23 @@ class _BenchmarkScreenState extends ConsumerState<BenchmarkScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => _copyCompatibilityReport(state.latestResult!),
+                icon: const Icon(Icons.assignment_outlined),
+                label: const Text('Copy compatibility report'),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Copies hardware facts and these speed figures to the '
+                  'clipboard. No prompts or outputs are included and nothing '
+                  'is uploaded; paste it into a GitHub report if you choose.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
               const SizedBox(height: 24),
             ],
 
@@ -900,6 +919,45 @@ class _BenchmarkScreenState extends ConsumerState<BenchmarkScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _copyCompatibilityReport(BenchmarkRun run) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final profile = await ref.read(deviceHardwareProfileProvider.future);
+      final info = await PackageInfo.fromPlatform();
+      final report = CompatibilityReport(
+        generatedAtUtc: DateTime.now().toUtc(),
+        appVersion: info.version,
+        cpuArchitecture: profile.cpuArchitecture,
+        cpuCores: profile.cpuCores,
+        totalRamGB: profile.totalRamGB,
+        availableRamGB: profile.availableRamGB,
+        freeStorageGB: profile.availableStorageGB,
+        thermalState: run.thermalState ?? profile.thermalState,
+        modelName: run.modelName,
+        backend: run.backend,
+        promptType: run.promptType,
+        timeToFirstTokenMs: run.timeToFirstTokenMs,
+        tokensPerSecond: run.tokensPerSecond,
+        totalTokens: run.totalTokens,
+        totalTimeMs: run.totalTimeMs,
+        tokenCountsEstimated: run.tokenCountsEstimated,
+      );
+      await Clipboard.setData(ClipboardData(text: report.toMarkdown()));
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Report copied. Nothing was uploaded; paste it into a GitHub '
+            'compatibility report if you want to share it.',
+          ),
+        ),
+      );
+    } catch (error) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Could not build the report: $error')),
+      );
+    }
   }
 
   Widget _buildLiveStatColumn(ThemeData theme, String value, String label) {
