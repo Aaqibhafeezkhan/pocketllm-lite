@@ -987,6 +987,49 @@ class StorageService {
     return note;
   }
 
+  /// Replaces the title and content of an existing note.
+  ///
+  /// Throws [ArgumentError] when either field is empty and [StateError] when
+  /// no note has [id], so a stale editor can never silently create a note.
+  Future<Map<String, dynamic>> updateLocalNote({
+    required String id,
+    required String title,
+    required String content,
+  }) async {
+    final cleanTitle = title.trim();
+    final cleanContent = content.trim();
+    if (cleanTitle.isEmpty || cleanContent.isEmpty) {
+      throw ArgumentError('Note title and content must not be empty.');
+    }
+    final notes = getLocalNotes().toList();
+    final index = notes.indexWhere((note) => note['id'] == id);
+    if (index < 0) throw StateError('This note no longer exists.');
+    final updated = <String, dynamic>{
+      ...notes[index],
+      'title': cleanTitle,
+      'content': cleanContent,
+      'updatedAt': DateTime.now().toUtc().toIso8601String(),
+    };
+    notes[index] = updated;
+    await saveSetting(AppConstants.localNotesKey, notes);
+    await logActivity('Local Note Updated', 'Updated note "$cleanTitle"');
+    return updated;
+  }
+
+  /// Deletes a note. Returns false when no note had [id].
+  Future<bool> deleteLocalNote(String id) async {
+    final notes = getLocalNotes().toList();
+    final index = notes.indexWhere((note) => note['id'] == id);
+    if (index < 0) return false;
+    final removed = notes.removeAt(index);
+    await saveSetting(AppConstants.localNotesKey, notes);
+    await logActivity(
+      'Local Note Deleted',
+      'Deleted note "${removed['title']}"',
+    );
+    return true;
+  }
+
   @visibleForTesting
   Map<String, dynamic> getExportableSettings() {
     final Map<String, dynamic> settings = {};

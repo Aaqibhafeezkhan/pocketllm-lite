@@ -151,6 +151,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         const Divider(height: 1, indent: 56),
         ListTile(
+          title: const Text('Notes'),
+          subtitle: const Text(
+              'Notes the assistant saved for you: read, edit or delete them'),
+          leading: Icon(Icons.sticky_note_2_outlined,
+              color: theme.colorScheme.primary),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            context.push('/settings/notes');
+          },
+        ),
+        const Divider(height: 1, indent: 56),
+        ListTile(
           title: const Text('Appearance & Themes'),
           subtitle: const Text(
               'Light/dark modes, custom color palettes, and haptic feedback toggles'),

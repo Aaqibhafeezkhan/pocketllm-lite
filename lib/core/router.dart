@@ -1,3 +1,4 @@
+import '../features/settings/presentation/screens/notes_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/splash/splash_screen.dart';
@@ -69,6 +70,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => ModelStoreScreen(
               initialQuery: state.uri.queryParameters['query'] ?? '',
             ),
+          ),
+          GoRoute(
+            path: 'notes',
+            builder: (context, state) => const NotesScreen(),
           ),
           GoRoute(
             path: 'local-models',
