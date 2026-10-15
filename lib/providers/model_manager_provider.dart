@@ -1,3 +1,4 @@
+import '../services/model_bundle_validator.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -61,33 +62,51 @@ class ModelManagerNotifier extends Notifier<ModelManagerState> {
       await for (final entity in modelDirectory.list(followLinks: false)) {
         if (entity is Directory) {
           if (p.basename(entity.path).startsWith('.')) continue;
-          final discoveredFiles = await entity
-              .list(recursive: true, followLinks: false)
-              .where((item) =>
-                  item is File && item.path.toLowerCase().endsWith('.gguf'))
-              .cast<File>()
-              .toList();
-          final files = <File>[];
-          for (final file in discoveredFiles) {
-            if (await ModelStorageService.instance.isValidGGUFFile(file.path)) {
-              files.add(file);
-            }
-          }
-          if (files.isEmpty || files.length != discoveredFiles.length) continue;
+          final inspection = await const ModelBundleValidator().inspect(entity);
           final id = p.basename(entity.path);
-          final size = await _sumFileSizes(files);
-          final manifest = persisted[id] ??
-              _manifestForLocalFile(
-                id: id,
-                filename: p.basename(files.first.path),
-                sizeBytes: size,
-                status: ModelSupportStatus.installedUntested,
-              );
-          discovered[id] = _localModelFromManifest(
-            manifest,
-            localPath: files.first.path,
-            customImport: manifest.source != 'cactus-download',
-          );
+          if (inspection.isRunnable) {
+            // A Cactus bundle. `config.txt` stands in as the registered file so
+            // removing the model deletes the whole folder.
+            final manifest = persisted[id]?.copyWith(
+                  status: persisted[id]!.status ==
+                          ModelSupportStatus.backendUnsupported
+                      ? ModelSupportStatus.installedUntested
+                      : persisted[id]!.status,
+                ) ??
+                _manifestForLocalFile(
+                  id: id,
+                  filename: id,
+                  sizeBytes: inspection.totalBytes,
+                  status: ModelSupportStatus.installedUntested,
+                );
+            discovered[id] = _localModelFromManifest(
+              manifest,
+              localPath: p.join(entity.path, 'config.txt'),
+              customImport: manifest.source != 'cactus-download',
+            );
+          } else if (inspection.format == LocalModelFormat.gguf) {
+            // Visible so the user can see and delete it, but never presented
+            // as runnable: the bundled runtime has no GGUF loader.
+            final ggufFile = await entity
+                .list(recursive: true, followLinks: false)
+                .where((item) =>
+                    item is File && item.path.toLowerCase().endsWith('.gguf'))
+                .cast<File>()
+                .first;
+            final manifest = (persisted[id] ??
+                    _manifestForLocalFile(
+                      id: id,
+                      filename: p.basename(ggufFile.path),
+                      sizeBytes: inspection.totalBytes,
+                      status: ModelSupportStatus.backendUnsupported,
+                    ))
+                .copyWith(status: ModelSupportStatus.backendUnsupported);
+            discovered[id] = _localModelFromManifest(
+              manifest,
+              localPath: ggufFile.path,
+              customImport: true,
+            );
+          }
         } else if (entity is File &&
             entity.path.toLowerCase().endsWith('.gguf')) {
           // Older builds stored GGUF files directly in /models. Keep them
@@ -173,8 +192,9 @@ class ModelManagerNotifier extends Notifier<ModelManagerState> {
     }
     if (model.manifest?.status == ModelSupportStatus.backendUnsupported) {
       state = state.copyWith(
-        error: 'This legacy GGUF is not in a Cactus model folder. '
-            'Re-import it to register a runnable model path.',
+        error: 'This is a GGUF model. The on-device runtime in this build '
+            'only loads Cactus-format bundles from the Model Store. Use this '
+            'GGUF through Ollama or an OpenAI-compatible server.',
       );
       return false;
     }
@@ -283,7 +303,7 @@ class ModelManagerNotifier extends Notifier<ModelManagerState> {
       source: 'local-import',
       quantization: quantization,
       fileSizeBytes: sizeBytes,
-      backendCompatibility: const ['Cactus folder runtime'],
+      backendCompatibility: const ['Cactus bundle runtime'],
       minimumBackendVersion: '1.3.0',
       status: status,
       lastVerified: DateTime.now().toUtc(),
@@ -310,14 +330,6 @@ class ModelManagerNotifier extends Notifier<ModelManagerState> {
       capabilities: manifest.capabilities,
       manifest: manifest,
     );
-  }
-
-  Future<int> _sumFileSizes(List<File> files) async {
-    var total = 0;
-    for (final file in files) {
-      total += await file.length();
-    }
-    return total;
   }
 }
 

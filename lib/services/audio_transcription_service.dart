@@ -10,7 +10,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../core/domain/background_task.dart';
 import 'background_task_service.dart';
-import 'model_storage_service.dart';
+import 'model_bundle_validator.dart';
 
 class AudioTranscriptionError implements Exception {
   final String message;
@@ -106,7 +106,7 @@ class CactusWhisperTranscriber implements AudioTranscriber {
     final documents = await getApplicationDocumentsDirectory();
     final modelDirectory =
         Directory(path.join(documents.path, 'models', modelId));
-    if (!await _containsValidGguf(modelDirectory)) {
+    if (!await _containsValidBundle(modelDirectory)) {
       throw const AudioTranscriptionError(
         'The offline Whisper model is not installed. Automatic Cactus '
         'downloads are disabled because that SDK path bypasses the network '
@@ -136,23 +136,8 @@ class CactusWhisperTranscriber implements AudioTranscriber {
     }
   }
 
-  Future<bool> _containsValidGguf(Directory directory) async {
-    if (!await directory.exists()) return false;
-    final files = await directory
-        .list(recursive: true, followLinks: false)
-        .where(
-          (entity) =>
-              entity is File && entity.path.toLowerCase().endsWith('.gguf'),
-        )
-        .cast<File>()
-        .toList();
-    if (files.isEmpty) return false;
-    final validation = await Future.wait(
-      files.map(
-        (file) => ModelStorageService.instance.isValidGGUFFile(file.path),
-      ),
-    );
-    return validation.every((valid) => valid);
+  Future<bool> _containsValidBundle(Directory directory) async {
+    return (await const ModelBundleValidator().inspect(directory)).isRunnable;
   }
 
   String _whisperPrompt(String language) {
@@ -184,22 +169,8 @@ class AudioTranscriptionService {
     final modelDirectory = Directory(
       path.join(documents.path, 'models', CactusWhisperTranscriber.modelId),
     );
-    if (!await modelDirectory.exists()) return false;
-    final files = await modelDirectory
-        .list(recursive: true, followLinks: false)
-        .where(
-          (entity) =>
-              entity is File && entity.path.toLowerCase().endsWith('.gguf'),
-        )
-        .cast<File>()
-        .toList();
-    if (files.isEmpty) return false;
-    final validation = await Future.wait(
-      files.map(
-        (file) => ModelStorageService.instance.isValidGGUFFile(file.path),
-      ),
-    );
-    return validation.every((valid) => valid);
+    return (await const ModelBundleValidator().inspect(modelDirectory))
+        .isRunnable;
   }
 
   Future<AudioTranscriptionResult> transcribeAudioFile({

@@ -7,6 +7,7 @@ import 'package:archive/archive_io.dart';
 import 'package:path/path.dart' as p;
 import 'network_policy_service.dart';
 import 'network_gateway.dart';
+import 'model_bundle_validator.dart';
 import 'model_storage_service.dart';
 import '../core/domain/background_task.dart';
 import 'background_task_service.dart';
@@ -379,9 +380,12 @@ class ModelDownloadService {
       }
       await stagingDirectory.create(recursive: true);
       await _extractBundleSafely(partialFile, stagingDirectory);
-      if (!await _containsValidModel(stagingDirectory)) {
+      final inspection =
+          await const ModelBundleValidator().inspect(stagingDirectory);
+      if (!inspection.isRunnable) {
         throw StateError(
-          'The downloaded bundle contains no valid GGUF model file.',
+          'The downloaded bundle is not a loadable model: '
+          '${inspection.problem ?? 'unrecognized format'}',
         );
       }
       if (await finalDirectory.exists()) {
@@ -437,20 +441,7 @@ class ModelDownloadService {
   }
 
   Future<bool> _containsValidModel(Directory directory) async {
-    if (!await directory.exists()) return false;
-    final files = await directory
-        .list(recursive: true, followLinks: false)
-        .where(
-          (entity) =>
-              entity is File && entity.path.toLowerCase().endsWith('.gguf'),
-        )
-        .cast<File>()
-        .toList();
-    if (files.isEmpty) return false;
-    final results = await Future.wait(
-      files.map((file) => _storage.isValidGGUFFile(file.path)),
-    );
-    return results.every((valid) => valid);
+    return (await const ModelBundleValidator().inspect(directory)).isRunnable;
   }
 
   Future<void> _extractBundleSafely(
@@ -462,7 +453,10 @@ class ModelDownloadService {
       final archive = ZipDecoder().decodeStream(input, verify: true);
       final names = archive
           .map((entry) => entry.name.replaceAll('\\', '/'))
-          .where((name) => name.isNotEmpty)
+          .where(
+            (name) =>
+                name.isNotEmpty && !ModelBundleValidator.isArchiveJunk(name),
+          )
           .toList(growable: false);
       final firstParts = names
           .map((name) => name.split('/').first)
@@ -472,6 +466,7 @@ class ModelDownloadService {
       final root = p.canonicalize(destination.path);
       for (final entry in archive) {
         if (entry.isSymbolicLink) continue;
+        if (ModelBundleValidator.isArchiveJunk(entry.name)) continue;
         var relative = entry.name.replaceAll('\\', '/');
         if (sharedRoot != null && relative.startsWith('$sharedRoot/')) {
           relative = relative.substring(sharedRoot.length + 1);

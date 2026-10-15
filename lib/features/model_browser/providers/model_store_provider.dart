@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers.dart';
+import '../../../services/model_bundle_validator.dart';
 import '../../../services/model_storage_service.dart';
 import '../domain/model_store_model.dart';
 
@@ -23,20 +24,8 @@ final installedStoreModelIdsProvider = FutureProvider<Set<String>>((ref) async {
             )) {
       continue;
     }
-    final modelFiles = await entity
-        .list(recursive: true, followLinks: false)
-        .where(
-          (item) => item is File && item.path.toLowerCase().endsWith('.gguf'),
-        )
-        .cast<File>()
-        .toList();
-    final valid = modelFiles.isNotEmpty &&
-        (await Future.wait(
-          modelFiles.map(
-            (file) => ModelStorageService.instance.isValidGGUFFile(file.path),
-          ),
-        ))
-            .every((result) => result);
+    final valid =
+        (await const ModelBundleValidator().inspect(entity)).isRunnable;
     if (valid) {
       ids.add(entity.uri.pathSegments.where((e) => e.isNotEmpty).last);
     }

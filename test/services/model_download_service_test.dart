@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -5,6 +6,7 @@ import 'package:archive/archive.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
+import 'package:pocketllm_lite/services/model_bundle_validator.dart';
 import 'package:pocketllm_lite/services/model_download_service.dart';
 import 'package:pocketllm_lite/services/network_policy_service.dart';
 import 'package:pocketllm_lite/services/model_storage_service.dart';
@@ -14,16 +16,13 @@ void main() {
     final root = await Directory.systemTemp.createTemp('pocketllm_download_');
     addTearDown(() => root.delete(recursive: true));
     final archive = Archive()
-      ..addFile(ArchiveFile('fixture/model.gguf', 8, const [
-        0x47,
-        0x47,
-        0x55,
-        0x46,
-        1,
-        2,
-        3,
-        4,
-      ]));
+      ..addFile(ArchiveFile(
+          'fixture/config.txt', 20, utf8.encode('precision=INT8\nvocab=1\n')))
+      ..addFile(ArchiveFile('fixture/layer_0.weights', 4, const [1, 2, 3, 4]))
+      ..addFile(
+          ArchiveFile('__MACOSX/fixture/._config.txt', 4, const [0, 5, 22, 7]))
+      ..addFile(
+          ArchiveFile('fixture/._layer_0.weights', 4, const [0, 5, 22, 7]));
     final bundle = ZipEncoder().encode(archive);
     final adapter = _RangeIgnoringAdapter(bundle);
     final dio = Dio()..httpClientAdapter = adapter;
@@ -49,12 +48,52 @@ void main() {
     expect(adapter.rangedGets, 1);
     expect(adapter.fullGets, 1);
     expect(await partial.exists(), isFalse);
+    final inspection =
+        await const ModelBundleValidator().inspect(Directory(installed));
+    expect(inspection.isRunnable, isTrue, reason: '${inspection.problem}');
+    expect(inspection.weightFileCount, 1);
+    // macOS resource-fork junk from the archive must not be installed.
+    expect(await Directory(path.join(installed, '__MACOSX')).exists(), isFalse);
     expect(
-      await storage.isValidGGUFFile(
-        path.join(installed, 'model.gguf'),
-      ),
-      isTrue,
+      await File(path.join(installed, '._layer_0.weights')).exists(),
+      isFalse,
     );
+  });
+
+  test('a catalog bundle that only holds a GGUF is rejected with guidance',
+      () async {
+    final root = await Directory.systemTemp.createTemp('pocketllm_gguf_only_');
+    addTearDown(() => root.delete(recursive: true));
+    final archive = Archive()
+      ..addFile(ArchiveFile('fixture/model.gguf', 8, const [
+        0x47, 0x47, 0x55, 0x46, 1, 2, 3, 4, //
+      ]));
+    final bundle = ZipEncoder().encode(archive);
+    final storage = _FakeStorage(root);
+
+    await expectLater(
+      ModelDownloadService(
+        dio: Dio()..httpClientAdapter = _RangeIgnoringAdapter(bundle),
+        storage: storage,
+      ).downloadManagedBundle(
+        modelId: 'gguf-only',
+        modelName: 'GGUF only',
+        url: 'https://example.test/gguf-only.zip',
+        archiveFilename: 'gguf-only.zip',
+        catalogSizeMb: 1,
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          allOf(contains('not a loadable model'), contains('GGUF')),
+        ),
+      ),
+    );
+    final models = await storage.getModelDirectory();
+    expect(
+        await Directory(path.join(models.path, 'gguf-only')).exists(), isFalse,
+        reason: 'a rejected bundle must not be left installed');
   });
 
   group('redirects', () {
@@ -66,9 +105,13 @@ void main() {
       root = await Directory.systemTemp.createTemp('pocketllm_redirect_');
       storage = _FakeStorage(root);
       final archive = Archive()
-        ..addFile(ArchiveFile('fixture/model.gguf', 8, const [
-          0x47, 0x47, 0x55, 0x46, 1, 2, 3, 4, //
-        ]));
+        ..addFile(ArchiveFile(
+            'fixture/config.txt', 20, utf8.encode('precision=INT8\nvocab=1\n')))
+        ..addFile(ArchiveFile('fixture/layer_0.weights', 4, const [1, 2, 3, 4]))
+        ..addFile(ArchiveFile(
+            '__MACOSX/fixture/._config.txt', 4, const [0, 5, 22, 7]))
+        ..addFile(
+            ArchiveFile('fixture/._layer_0.weights', 4, const [0, 5, 22, 7]));
       bundle = ZipEncoder().encode(archive);
     });
 
@@ -94,7 +137,7 @@ void main() {
         catalogSizeMb: 1,
       );
 
-      expect(await File(path.join(installed, 'model.gguf')).exists(), isTrue);
+      expect(await File(path.join(installed, 'config.txt')).exists(), isTrue);
       expect(policy.hosts, contains('example.test'));
       expect(policy.hosts, contains('cdn.example.test'),
           reason: 'the CDN hop must be evaluated by network policy');

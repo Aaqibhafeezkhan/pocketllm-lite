@@ -125,6 +125,12 @@ class InsufficientMemoryError extends InferenceException {
   const InsufficientMemoryError(super.message, [super.cause]);
 }
 
+/// The model on disk is a format this runtime cannot load (for example a
+/// GGUF file given to the Cactus runtime). Carries user-facing guidance.
+class ModelFormatUnsupportedError extends InferenceException {
+  const ModelFormatUnsupportedError(super.message, [super.cause]);
+}
+
 class ModelCorruptedError extends InferenceException {
   const ModelCorruptedError(super.message, [super.cause]);
 }

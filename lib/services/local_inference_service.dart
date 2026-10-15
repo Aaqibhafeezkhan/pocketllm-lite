@@ -10,7 +10,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'error_log_service.dart';
 import 'inference_service.dart';
-import 'model_storage_service.dart';
+import 'model_bundle_validator.dart';
 
 class LocalInferenceService implements InferenceService {
   final ErrorLogService? _errorLogService;
@@ -44,25 +44,10 @@ class LocalInferenceService implements InferenceService {
       await for (final entity in root.list(followLinks: false)) {
         if (entity is! Directory) continue;
         if (p.basename(entity.path).startsWith('.')) continue;
-        final discoveredFiles = await entity
-            .list(recursive: true, followLinks: false)
-            .where((item) =>
-                item is File && item.path.toLowerCase().endsWith('.gguf'))
-            .cast<File>()
-            .toList();
-        final ggufFiles = <File>[];
-        for (final file in discoveredFiles) {
-          if (await ModelStorageService.instance.isValidGGUFFile(file.path)) {
-            ggufFiles.add(file);
-          }
-        }
-        if (ggufFiles.isEmpty || ggufFiles.length != discoveredFiles.length) {
-          continue;
-        }
-        var size = 0;
-        for (final file in ggufFiles) {
-          size += await file.length();
-        }
+        final inspection = await const ModelBundleValidator().inspect(entity);
+        // Only bundles the runtime can actually load are offered as models.
+        if (!inspection.isRunnable) continue;
+        final size = inspection.totalBytes;
         final id = p.basename(entity.path);
         models.add(
           LLMModel(
@@ -71,7 +56,7 @@ class LocalInferenceService implements InferenceService {
             backend: InferenceBackend.local,
             sizeBytes: size,
             isDownloaded: true,
-            quantizationBits: _quantizationFromFiles(ggufFiles),
+            quantizationBits: await _quantizationFromConfig(entity),
           ),
         );
       }
@@ -98,24 +83,14 @@ class LocalInferenceService implements InferenceService {
           'Model is not installed in the app model directory.',
         );
       }
-      final discoveredFiles = await modelDirectory
-          .list(recursive: true, followLinks: false)
-          .where((item) =>
-              item is File && item.path.toLowerCase().endsWith('.gguf'))
-          .cast<File>()
-          .toList();
-      final validation = await Future.wait(
-        discoveredFiles.map(
-          (file) => ModelStorageService.instance.isValidGGUFFile(file.path),
-        ),
-      );
-      final ggufFiles = <File>[
-        for (var index = 0; index < discoveredFiles.length; index++)
-          if (validation[index]) discoveredFiles[index],
-      ];
-      if (ggufFiles.isEmpty || ggufFiles.length != discoveredFiles.length) {
-        throw const ModelCorruptedError(
-          'The model folder does not contain only valid GGUF model files.',
+      final inspection =
+          await const ModelBundleValidator().inspect(modelDirectory);
+      if (inspection.format == LocalModelFormat.gguf) {
+        throw ModelFormatUnsupportedError(inspection.problem!);
+      }
+      if (!inspection.isRunnable) {
+        throw ModelCorruptedError(
+          inspection.problem ?? 'The model folder is not a valid bundle.',
         );
       }
 
@@ -134,12 +109,12 @@ class LocalInferenceService implements InferenceService {
       );
       if (initialized.$1 == null) {
         throw InferenceError(
-          'Cactus could not initialize this GGUF architecture: ${initialized.$2}',
+          'Cactus could not initialize this model: ${initialized.$2}',
         );
       }
       _handle = initialized.$1;
       _loadedModelId = modelId;
-      _loadedQuantization = _quantizationFromFiles(ggufFiles) ?? 8;
+      _loadedQuantization = await _quantizationFromConfig(modelDirectory) ?? 8;
       onProgress?.call(
         const InferenceProgress(progress: 1, status: 'Model loaded'),
       );
@@ -251,16 +226,21 @@ class LocalInferenceService implements InferenceService {
     return Directory(p.join(documents.path, 'models'));
   }
 
-  int? _quantizationFromFiles(List<File> files) {
-    for (final file in files) {
-      final match = RegExp(
-        r'(?:^|[._-])Q(\d)(?:_|[.-])',
-        caseSensitive: false,
-      ).firstMatch(p.basename(file.path));
-      if (match != null) return int.tryParse(match.group(1)!);
-      final lower = p.basename(file.path).toLowerCase();
-      if (lower.contains('f16') || lower.contains('fp16')) return 16;
-      if (lower.contains('f32') || lower.contains('fp32')) return 32;
+  /// Bits per weight from the bundle's `config.txt` (`precision=INT8`).
+  Future<int?> _quantizationFromConfig(Directory directory) async {
+    try {
+      final config = File(p.join(directory.path, 'config.txt'));
+      if (!await config.exists()) return null;
+      for (final line in await config.readAsLines()) {
+        if (!line.startsWith('precision=')) continue;
+        final value = line.substring('precision='.length).trim().toUpperCase();
+        if (value.contains('INT4')) return 4;
+        if (value.contains('INT8')) return 8;
+        if (value.contains('16')) return 16;
+        if (value.contains('32')) return 32;
+      }
+    } catch (_) {
+      // The default is applied by the caller.
     }
     return null;
   }
