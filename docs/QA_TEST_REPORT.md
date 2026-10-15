@@ -113,7 +113,7 @@ Next.js 16.4.1, Playwright 1.64 (Chromium headless shell), Android emulator
 | `cd webapp && npx next build` | pass, TypeScript validated |
 | `cd webapp && npx playwright test` (desktop + mobile) | **7 / 7 passed** |
 | `cd webapp && npm audit --omit=dev` | 0 vulnerabilities (pass 1: 9) |
-| `cd webapp && npm ci` | not re-run from a clean checkout in this pass; `npm install` kept the lockfile in sync and CI runs `npm ci` |
+| `cd webapp && npm ci` | pass (clean install from the lockfile) |
 
 ### Coverage (measured, with its limits)
 

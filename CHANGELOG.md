@@ -12,6 +12,67 @@ We use a specific versioning pattern:
 - Once the 3rd number reaches 100, the next version resets it to 0 and increments the 2nd number (minor). For example: 1.0.100 becomes 1.1.0.
 - Similarly, 1.1.100 becomes 1.2.0.
 
+## [Unreleased]
+
+Changes on `claude/quality-growth-pass-2`; no version bump until the maintainer
+cuts a release.
+
+### Added
+
+- Onboarding: a "Get your first model" step with device-aware catalog picks,
+  real download progress and cancel, and alternatives (own server, GGUF import,
+  decide later).
+- Chat: a model chip and picker sheet, and an overflow menu for secondary
+  actions.
+- Settings: Language picker (device default plus six languages; non-English
+  entries flagged as not yet reviewed) and a Notes screen to read, edit, copy
+  and delete notes.
+- Benchmark: "Copy compatibility report" (hardware facts and speed figures, no
+  prompts or outputs, nothing uploaded) and a GitHub issue form for it.
+- Local API: `Host` and `Origin` enforcement, an origin allow-list setting,
+  preflight handling, body and generation timeouts, `[::1]` listener.
+- Web edition: connect-a-model prompt, opt-in labelled demo mode, Vitest and
+  Playwright tests, build-time release snapshot.
+- Release engineering: fail-closed Gradle signing, manual protected-secret
+  release workflow, APK signature verification and checksum scripts.
+- Tests: RAG evaluation corpus, PDF ingestion tests, Android emulator
+  integration test of the real app.
+
+### Changed
+
+- `web_search` is a medium-risk network tool that always asks first and shows
+  the destination and exact query; it is refused under Strict Offline before any
+  prompt.
+- Redirects are followed by the app so each hop is policy-checked and audited.
+- `0.0.0.0` is no longer treated as loopback; loopback decisions are not
+  persisted to the audit log.
+- Plain-text sources are cited by section instead of "page 1"; Latin-1 text and
+  CSV files import.
+- Web edition no longer answers with scripted text unless demo mode is on.
+- The PDF engine sits behind `PdfTextBackend`.
+
+### Fixed
+
+- Embedded API: SSE streams terminate on runtime failure; oversize bodies
+  return 413; constant-time key comparison.
+- Tool calls with a non-string `id` no longer crash parsing; the legacy XML
+  adapter parses JSON arguments.
+- Web edition: runtime Google Fonts removed, social-preview URLs, React hook
+  lint errors, unsolicited localhost probe.
+
+### Security
+
+- Removed unused vulnerable web dependencies and upgraded `sharp`:
+  `npm audit --omit=dev` 9 to 0.
+- Untracked `android/key.properties.bak`; added ignore rules and a regression
+  test. A keystore remains in public git history and must be retired by the
+  maintainer (`docs/RELEASE_SIGNING.md`).
+
+### Known
+
+- Only the `arm64-v8a` APK contains the on-device model runtime.
+- APKs remain debug-signed until a production key is supplied.
+
 ## [1.0.39] - 2026-10-04
 
 ### Removed

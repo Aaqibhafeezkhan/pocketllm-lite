@@ -102,6 +102,43 @@ Rules that keep the privacy promise true:
 - Do not assert on performance numbers in unit tests; record measurements in a
   report instead.
 
+## Testing beyond unit tests
+
+### Android integration tests (device or emulator)
+
+```bash
+flutter devices                      # find a device id
+flutter test integration_test/core_flows_test.dart -d DEVICE_ID
+adb shell pm clear com.pocketllm.pocketllm_lite   # fresh state
+flutter test integration_test/app_flow_test.dart -d DEVICE_ID
+# optional paced run so an external adb screencap loop can grab frames:
+flutter test integration_test/app_flow_test.dart -d DEVICE_ID --dart-define=SCREENSHOT_PAUSE_MS=3500
+```
+
+The Cactus runtime is packaged for `arm64-v8a` only, so on-device inference
+cannot run on an x86_64 emulator. Use an arm64 phone for that.
+
+### Web tests
+
+```bash
+cd webapp
+npm test                  # Vitest
+npx playwright install chromium   # once
+npm run build && npm run test:e2e
+CAPTURE_SCREENSHOTS=1 npx playwright test e2e/screenshots.spec.ts   # refresh docs/screenshots/web
+```
+
+### Measuring
+
+`scripts/perf/android_cold_start.sh` (launch time, idle memory) and the in-app
+Benchmark screen (time to first token, tokens per second, "Copy compatibility
+report"). See `docs/PERFORMANCE.md` for what is and is not measured.
+
+### Release engineering
+
+`docs/RELEASE_SIGNING.md`, `docs/RELEASE_CHECKLIST.md`,
+`.github/workflows/release.yml`, `scripts/release/`.
+
 ## Web Edition (`webapp/`)
 
 ```bash
