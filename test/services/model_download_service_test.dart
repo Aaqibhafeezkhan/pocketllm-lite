@@ -6,7 +6,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 import 'package:pocketllm_lite/services/model_download_service.dart';
-import 'package:pocketllm_lite/services/network_gateway.dart';
 import 'package:pocketllm_lite/services/network_policy_service.dart';
 import 'package:pocketllm_lite/services/model_storage_service.dart';
 

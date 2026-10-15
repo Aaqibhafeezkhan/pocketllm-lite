@@ -1,3 +1,4 @@
+import '../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -165,7 +166,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           ),
           IconButton(
             icon: const Icon(Icons.history_rounded),
-            tooltip: 'History',
+            tooltip: AppLocalizations.of(context).history,
             onPressed: () {
               haptic();
               Navigator.of(context).push(

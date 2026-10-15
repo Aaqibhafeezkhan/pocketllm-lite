@@ -1,3 +1,5 @@
+import '../../core/localization/language_picker.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -48,7 +50,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       },
       child: Scaffold(
         appBar: M3AppBar(
-          title: 'Settings',
+          title: AppLocalizations.of(context).settings,
           onBack: () {
             if (GoRouter.of(context).canPop()) {
               context.pop();
@@ -75,6 +77,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader('Configuration Categories'),
+        const LanguageSettingsTile(),
+        const Divider(height: 1, indent: 56),
         ListTile(
           title: const Text('Model Store'),
           subtitle: const Text(

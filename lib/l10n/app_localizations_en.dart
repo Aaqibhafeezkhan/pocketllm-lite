@@ -52,4 +52,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chat => 'Chat';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get languageSystemDefault => 'Device language';
+
+  @override
+  String get languageUnreviewed => 'Translation not yet reviewed';
+
+  @override
+  String get languageCoverageNote =>
+      'Only part of the app is translated so far. Anything without a translation is shown in English.';
+
+  @override
+  String get modelSetupTitle => 'Get your first model';
 }

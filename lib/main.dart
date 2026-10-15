@@ -1,3 +1,5 @@
+import 'core/localization/app_locale.dart';
+import 'l10n/app_localizations.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -105,6 +107,7 @@ class PocketLLMApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeProvider);
+    final locale = ref.watch(appLocaleProvider);
 
     return MaterialApp.router(
       key: navigatorKey,
@@ -112,6 +115,9 @@ class PocketLLMApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

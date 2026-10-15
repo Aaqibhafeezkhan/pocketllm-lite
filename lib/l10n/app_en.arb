@@ -14,5 +14,10 @@
   "settings": "Settings",
   "benchmarks": "Benchmarks",
   "history": "History",
-  "chat": "Chat"
+  "chat": "Chat",
+  "language": "Language",
+  "languageSystemDefault": "Device language",
+  "languageUnreviewed": "Translation not yet reviewed",
+  "languageCoverageNote": "Only part of the app is translated so far. Anything without a translation is shown in English.",
+  "modelSetupTitle": "Get your first model"
 }

@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -37,7 +38,7 @@ class _ChatSettingsDialogState extends ConsumerState<ChatSettingsDialog> {
 
     return AlertDialog(
       title: Text(
-        'Chat Settings',
+        AppLocalizations.of(context).chatSettings,
         style: theme.textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.bold,
         ),
@@ -277,7 +278,7 @@ class _ChatSettingsDialogState extends ConsumerState<ChatSettingsDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context).cancel),
         ),
         FilledButton.tonal(
           onPressed: () {
@@ -312,7 +313,7 @@ class _ChatSettingsDialogState extends ConsumerState<ChatSettingsDialog> {
 
             Navigator.pop(context);
           },
-          child: const Text('Apply Changes'),
+          child: Text(AppLocalizations.of(context).applyChanges),
         ),
       ],
     );

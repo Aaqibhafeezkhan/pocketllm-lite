@@ -1,4 +1,7 @@
 class AppConstants {
+  /// Display language: `system` or a language code from lib/l10n.
+  static const String appLocaleKey = 'app_locale';
+
   /// Comma-separated browser origins allowed to call the local API server.
   static const String openAiServerAllowedOriginsKey =
       'openai_server_allowed_origins';

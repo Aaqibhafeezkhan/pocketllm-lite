@@ -71,8 +71,8 @@ abstract class AppLocalizations {
 
   final String localeName;
 
-  static AppLocalizations? of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
@@ -195,6 +195,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Chat'**
   String get chat;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @languageSystemDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Device language'**
+  String get languageSystemDefault;
+
+  /// No description provided for @languageUnreviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Translation not yet reviewed'**
+  String get languageUnreviewed;
+
+  /// No description provided for @languageCoverageNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Only part of the app is translated so far. Anything without a translation is shown in English.'**
+  String get languageCoverageNote;
+
+  /// No description provided for @modelSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get your first model'**
+  String get modelSetupTitle;
 }
 
 class _AppLocalizationsDelegate
