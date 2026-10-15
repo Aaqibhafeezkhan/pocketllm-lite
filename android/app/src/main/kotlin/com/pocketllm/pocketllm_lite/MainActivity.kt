@@ -2,6 +2,7 @@ package com.pocketllm.pocketllm_lite
 
 import android.app.ActivityManager
 import android.content.Context
+import android.content.Intent
 import android.os.BatteryManager
 import android.os.Build
 import android.os.PowerManager
@@ -17,9 +18,36 @@ class MainActivity : FlutterActivity() {
     private val storageChannel = "pocketllm_lite/storage"
     private val deviceChannel = "pocketllm_lite/device"
     private val ocrChannel = "pocketllm_lite/ocr"
+    private val shareChannel = "pocketllm_lite/share"
+    private var shareMethodChannel: MethodChannel? = null
+    private var pendingShare: Map<String, Any?>? = null
+    private val shareHandler by lazy { ShareIntentHandler(this) }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        shareHandler.purgeOld()
+        // A share that launched the app is parsed once and handed to Dart on
+        // request, so URI read permission is used while it is still valid.
+        pendingShare = shareHandler.parse(intent)
+        setIntent(Intent())
+        shareMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, shareChannel).also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getInitialShare" -> {
+                        val share = pendingShare
+                        pendingShare = null
+                        result.success(share)
+                    }
+                    "discard" -> {
+                        val paths = call.argument<List<String>>("paths") ?: emptyList()
+                        shareHandler.discard(paths)
+                        result.success(null)
+                    }
+                    "inboxPath" -> result.success(shareHandler.inboxDirectory().absolutePath)
+                    else -> result.notImplemented()
+                }
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, storageChannel).setMethodCallHandler { call, result ->
             if (call.method == "getFreeDiskSpace") {
                 try {
@@ -100,6 +128,18 @@ class MainActivity : FlutterActivity() {
             } catch (error: Exception) {
                 result.error("OCR_INPUT_ERROR", error.localizedMessage, null)
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val share = shareHandler.parse(intent) ?: return
+        setIntent(Intent())
+        val channel = shareMethodChannel
+        if (channel != null) {
+            channel.invokeMethod("onShare", share)
+        } else {
+            pendingShare = share
         }
     }
 }

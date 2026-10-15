@@ -5,6 +5,7 @@ import 'package:flutter_m3shapes/flutter_m3shapes.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_motion.dart';
+import '../sharing/providers/share_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -49,6 +50,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   Future<void> _checkFirstLaunch() async {
     await Future.delayed(const Duration(seconds: 2));
+    // A share that launched the app goes straight to the share screen.
+    final launchShare =
+        await ref.read(shareIntakeServiceProvider).takeInitialShare();
+    if (launchShare != null &&
+        await ref.read(shareProvider.notifier).ingest(launchShare)) {
+      if (mounted) context.go('/share');
+      return;
+    }
     final storage = ref.read(storageServiceProvider);
     final isFirstLaunch = storage.getSetting(
       AppConstants.isFirstLaunchKey,

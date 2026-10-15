@@ -1,4 +1,5 @@
 import '../features/settings/presentation/screens/notes_screen.dart';
+import '../features/sharing/presentation/share_receiver_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/splash/splash_screen.dart';
@@ -48,6 +49,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(path: '/chat', builder: (context, state) => const ChatScreen()),
+      GoRoute(
+        path: '/share',
+        builder: (context, state) => const ShareReceiverScreen(),
+      ),
       GoRoute(
         path: '/model-browser',
         builder: (context, state) => const ModelBrowserScreen(),

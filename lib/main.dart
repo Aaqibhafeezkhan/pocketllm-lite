@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router.dart';
+import 'features/sharing/providers/share_provider.dart';
 import 'core/providers.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/widgets/update_dialog.dart';
@@ -106,6 +107,7 @@ class PocketLLMApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    ref.watch(shareCoordinatorProvider);
     final themeMode = ref.watch(themeProvider);
     final locale = ref.watch(appLocaleProvider);
 
