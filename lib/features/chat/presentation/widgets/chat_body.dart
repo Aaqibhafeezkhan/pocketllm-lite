@@ -200,7 +200,7 @@ class _DisconnectedState extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                'Not Connected',
+                'No model ready',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
@@ -208,8 +208,8 @@ class _DisconnectedState extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'No model is ready. Download an on-device model, or connect '
-                'an Ollama or OpenAI-compatible server.',
+                'Download an on-device model, or connect an Ollama or '
+                'OpenAI-compatible server.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -222,14 +222,19 @@ class _DisconnectedState extends StatelessWidget {
                 alignment: WrapAlignment.center,
                 children: [
                   FilledButton.icon(
-                    onPressed: () => context.push('/settings'),
-                    icon: const Icon(Icons.settings_rounded),
-                    label: const Text('Configure'),
+                    onPressed: () => context.push('/settings/model-catalog'),
+                    icon: const Icon(Icons.download_rounded),
+                    label: const Text('Get a model'),
                   ),
                   FilledButton.tonalIcon(
+                    onPressed: () => context.push('/settings/privacy-network'),
+                    icon: const Icon(Icons.dns_rounded),
+                    label: const Text('Connect a server'),
+                  ),
+                  TextButton.icon(
                     onPressed: () => context.push('/settings/docs'),
                     icon: const Icon(Icons.description_outlined),
-                    label: const Text('Setup Guide'),
+                    label: const Text('Setup guide'),
                   ),
                 ],
               ),
