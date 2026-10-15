@@ -19,6 +19,11 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tracked files contain no signing material
+        run: node scripts/ci/check-secrets.mjs
       - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
       - run: flutter test
