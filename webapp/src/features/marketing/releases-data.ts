@@ -8,9 +8,7 @@
  * release bodies. Everything is escaped before being rendered.
  */
 
-/** GitHub API endpoint for published releases (same as site.js). */
-export const RELEASES_API =
-  'https://api.github.com/repos/PocketLLM/pocketllm-lite/releases?per_page=100';
+import snapshot from './releases.snapshot.json';
 
 export interface ReleaseAsset {
   name: string;
@@ -83,21 +81,17 @@ export const FALLBACK_RELEASES: ReleaseInfo[] = [
   },
 ];
 
-/** Fetch releases from the GitHub API; fall back to the embedded list. */
+/**
+ * Releases for the Downloads / Changelog pages.
+ *
+ * Read from the build-time snapshot (scripts/fetch-releases.mjs), so visitors
+ * make no request to GitHub's API from this page. Falls back to the embedded
+ * list if the snapshot is empty or malformed.
+ */
 export async function fetchReleases(): Promise<ReleaseInfo[]> {
-  try {
-    const response = await fetch(RELEASES_API, {
-      headers: { Accept: 'application/vnd.github+json' },
-    });
-    if (!response.ok) throw new Error(`GitHub API ${response.status}`);
-    const releases = (await response.json()) as ReleaseInfo[];
-    const usable = releases.filter((item) => !item.draft);
-    if (!usable.length) throw new Error('No releases returned');
-    return usable;
-  } catch {
-    // Offline / rate-limited / blocked — keep the page honest and useful.
-    return FALLBACK_RELEASES;
-  }
+  const releases = (snapshot as { releases?: ReleaseInfo[] }).releases;
+  const usable = Array.isArray(releases) ? releases.filter((r) => !r.draft) : [];
+  return usable.length ? usable : FALLBACK_RELEASES;
 }
 
 /** "Aug 29, 2026" style date (same Intl format as site.js). */
@@ -132,6 +126,17 @@ export function universalAPK(release: ReleaseInfo): ReleaseAsset | null {
     apks[0] ||
     null
   );
+}
+
+/**
+ * The newest release a visitor can actually install. A release published only
+ * to track web changes carries no APK, so "latest" by date is not always the
+ * right download target.
+ */
+export function latestApkRelease(
+  releases: ReleaseInfo[]
+): ReleaseInfo | undefined {
+  return releases.find((release) => !release.draft && universalAPK(release) !== null);
 }
 
 /** Descriptive label for an asset row ("ARM64 APK · most modern…"). */

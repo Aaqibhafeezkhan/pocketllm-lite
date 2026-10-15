@@ -26,7 +26,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Cpu, FileSearch, Server, Smartphone } from 'lucide-react';
 import { PRIVACY_HTML, TERMS_HTML } from './legal-content';
-import { universalAPK, type ReleaseInfo } from './releases-data';
+import { latestApkRelease, universalAPK, type ReleaseInfo } from './releases-data';
 import {
   ChangelogPage,
   DocsPage,
@@ -108,7 +108,9 @@ export function MarketingSite() {
   useEffect(() => {
     let cancelled = false;
     void getReleases().then((releases) => {
-      if (!cancelled && releases.length) setLatest(releases[0]);
+      if (!cancelled && releases.length) {
+        setLatest(latestApkRelease(releases) ?? releases[0]);
+      }
     });
     return () => {
       cancelled = true;

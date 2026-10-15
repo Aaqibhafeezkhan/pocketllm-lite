@@ -4,9 +4,9 @@
   "private": true,
   "description": "PocketLLM Lite Web Edition — marketing site + local-first AI workspace (Next.js 16, TypeScript, Tailwind 4, shadcn/ui).",
   "scripts": {
-    "predev": "node scripts/copy-ort.mjs",
+    "predev": "node scripts/copy-ort.mjs && node scripts/fetch-releases.mjs",
     "dev": "next dev -p 3000",
-    "prebuild": "node scripts/copy-ort.mjs",
+    "prebuild": "node scripts/copy-ort.mjs && node scripts/fetch-releases.mjs",
     "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
