@@ -212,7 +212,7 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Choose a GGUF file to copy into app storage. Runtime compatibility is confirmed only after the model loads successfully.',
+                        'Choose a GGUF file to copy into app storage. The on-device runtime in this build loads only Cactus bundles from the Model Store, so an imported GGUF is kept for reference and cannot run here. Use GGUF files through Ollama or an OpenAI-compatible server.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onPrimaryContainer
                               .withValues(alpha: 0.8),
@@ -1006,7 +1006,7 @@ class _ModelDetailsSheetContent extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   model.description ??
-                      'This GGUF file is registered in PocketLLM Lite. Its architecture and capabilities remain unverified until the configured local runtime loads it successfully.',
+                      'This GGUF file is registered in PocketLLM Lite but cannot be loaded by the on-device runtime in this build, which only runs Cactus bundles from the Model Store. Serve it with Ollama or an OpenAI-compatible server to use it.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                     height: 1.5,

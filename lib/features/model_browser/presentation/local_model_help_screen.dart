@@ -24,7 +24,7 @@ class LocalModelHelpScreen extends StatelessWidget {
             icon: Icons.memory_rounded,
             title: 'What is GGUF & Cactus?',
             description:
-                'GGUF is a model file format used by llama.cpp and related runtimes. PocketLLM Lite uses its Cactus adapter to attempt on-device inference with compatible installed models. A valid GGUF header proves the file format, not architecture support, memory fit, chat-template correctness, or working vision/tool capabilities.',
+                'GGUF is the file format used by llama.cpp and Ollama. The on-device runtime in this build (Cactus) does not read GGUF: it loads its own bundle format (a config.txt plus *.weights files), which the Model Store downloads for you, including Whisper for speech. GGUF files from Hugging Face are meant for Ollama or any OpenAI-compatible server that PocketLLM connects to.',
           ),
           const SizedBox(height: 20),
 
@@ -40,10 +40,10 @@ class LocalModelHelpScreen extends StatelessWidget {
             icon: Icons.file_open_rounded,
             title: 'How to Import Custom GGUF Models?',
             description:
-                '1. Obtain a GGUF from a trusted publisher and review its license, source, size, checksum, architecture, and template requirements.\n'
-                '2. Open the Local GGUF Catalog, tap "Browse Files", and select the `.gguf` file.\n'
-                '3. PocketLLM validates the header and copies the file into its app sandbox.\n'
-                '4. Attempt a real load and generation. Compatibility and advanced capabilities remain unknown until the installed runtime proves them.',
+                '1. For on-device use, open the Model Store and download a model: those bundles are the format the runtime loads.\n'
+                '2. To use a GGUF from Hugging Face, copy its Ollama command from the model page and run it on the computer that hosts Ollama.\n'
+                '3. Then add that Ollama server in Settings so PocketLLM can chat with it.\n'
+                '4. A GGUF imported onto the phone is stored but not loadable by the built-in runtime.',
           ),
           const SizedBox(height: 20),
 
@@ -166,7 +166,8 @@ class LocalModelHelpScreen extends StatelessWidget {
               children: [
                 _buildTableCell('Setup', theme),
                 _buildTableCell(
-                    'Import and successfully load a compatible GGUF.', theme),
+                    'Download a Cactus-format model from the Model Store (GGUF is not read by this runtime).',
+                    theme),
                 _buildTableCell(
                     'Requires a reachable Ollama host. Official support covers macOS, Windows, and Linux; Android/Termux is experimental.',
                     theme),
@@ -187,7 +188,7 @@ class LocalModelHelpScreen extends StatelessWidget {
               children: [
                 _buildTableCell('Imports', theme),
                 _buildTableCell(
-                    'Imports GGUF files, but runtime compatibility must be proven by a successful load.',
+                    'Stores GGUF files, which this runtime cannot load; Ollama serves them instead.',
                     theme),
                 _buildTableCell(
                     'Uses models returned by the host API; manage them with current Ollama tools.',

@@ -137,12 +137,12 @@ function capabilityHeadline(caps: Capabilities): string {
     return 'This browser cannot store model downloads (no private file system), so browser models are unavailable here.';
   }
   if (caps.webgpu) {
-    return 'This browser can run small GGUF models — WebGPU acceleration is available.';
+    return 'This browser has WebGPU, but this build has no in-browser model runtime yet. Chat uses Ollama or an OpenAI-compatible endpoint; downloads here are stored for a future runtime.';
   }
   if (caps.wasmSimd) {
-    return 'This browser can run tiny GGUF models on CPU (WASM SIMD). Large models are not recommended.';
+    return 'This build has no in-browser model runtime yet. Chat uses Ollama or an OpenAI-compatible endpoint; downloads here are stored for a future runtime.';
   }
-  return 'This browser cannot run GGUF models locally — no WebGPU and no WASM SIMD.';
+  return 'This build has no in-browser model runtime, and this browser lacks WebGPU and WASM SIMD. Chat uses Ollama or an OpenAI-compatible endpoint.';
 }
 
 /* ------------------------------ main view ----------------------------- */
@@ -287,7 +287,7 @@ export function ModelsView() {
       <div className="mx-auto w-full max-w-4xl px-4 pb-24 pt-6 sm:px-6">
         <PageHeader
           title="Models"
-          description="Download verified GGUF models to this browser, or import your own."
+          description="Store verified GGUF files in this browser, or import your own. Chat runs on the Ollama or OpenAI-compatible endpoint you connect."
           actions={
             <>
               <Button

@@ -126,7 +126,8 @@ class _ModelStoreScreenState extends ConsumerState<ModelStoreScreen> {
                     leading: const Icon(Icons.travel_explore),
                     title: const Text('Hugging Face GGUF'),
                     subtitle: const Text(
-                      'Search live Hub results and inspect exact GGUF files',
+                      'Find GGUF files to run through Ollama (not loadable '
+                      'by the on-device runtime)',
                     ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.push('/model-browser'),
@@ -136,7 +137,8 @@ class _ModelStoreScreenState extends ConsumerState<ModelStoreScreen> {
                     leading: const Icon(Icons.folder_open),
                     title: const Text('Browse Files'),
                     subtitle: const Text(
-                      'Import a local GGUF file into managed app storage',
+                      'Import a local model file (GGUF cannot run on-device '
+                      'in this build)',
                     ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.push('/settings/local-models'),

@@ -47,7 +47,7 @@ export const MODEL_CATALOG: ModelCatalogEntry[] = [
     capabilities: { tools: 'unknown', vision: 'unknown', embeddings: 'unknown' },
     runtimes: ['browser-gguf'],
     description:
-      'Sub-500M class model that runs on CPU/WASM. Best starting point for browser-local inference on modest hardware.',
+      'Sub-500M class model. The smallest download in the catalog; stored for a future in-browser runtime, or use the same model through Ollama.',
   },
   {
     id: 'llama-3.2-1b-instruct-q4-k-m',
@@ -65,7 +65,7 @@ export const MODEL_CATALOG: ModelCatalogEntry[] = [
     capabilities: { tools: 'unknown', vision: 'unknown', embeddings: 'unknown' },
     runtimes: ['browser-gguf'],
     description:
-      'The default browser-local option: strong quality for its size, needs WebGPU for comfortable speed.',
+      'Strong quality for its size. Stored for a future in-browser runtime; serve it through Ollama to chat with it today.',
   },
   {
     id: 'qwen2.5-1.5b-instruct-q4-k-m',

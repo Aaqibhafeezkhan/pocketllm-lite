@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -6,6 +7,7 @@ import 'package:path/path.dart' as p;
 import '../../../core/widgets/m3_app_bar.dart';
 import '../providers/model_browser_provider.dart';
 import '../domain/hf_model.dart';
+import '../domain/ollama_command.dart';
 import '../../../core/providers.dart';
 import '../../../models/model_manifest.dart';
 import '../../../providers/model_manager_provider.dart';
@@ -69,6 +71,38 @@ class ModelDetailScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 24),
+                      Card.filled(
+                        color: theme.colorScheme.tertiaryContainer,
+                        margin: EdgeInsets.zero,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                color: theme.colorScheme.onTertiaryContainer,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'GGUF files cannot run on the on-device '
+                                  'runtime in this build; it loads Cactus '
+                                  'bundles from the Model Store. Use a GGUF '
+                                  'through Ollama or any OpenAI-compatible '
+                                  'server: copy the command below and run it '
+                                  'on the computer that hosts your models.',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color:
+                                        theme.colorScheme.onTertiaryContainer,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       Text(
                         'Available Files (GGUF)',
                         style: theme.textTheme.titleLarge,
@@ -177,6 +211,7 @@ class ModelDetailScreen extends ConsumerWidget {
     ThemeData theme,
   ) {
     final sizeGB = file.sizeBytes / (1024 * 1024 * 1024);
+    final command = ollamaRunCommand(model.id, file.type);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8.0),
@@ -191,12 +226,39 @@ class ModelDetailScreen extends ConsumerWidget {
           file.filename,
           style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
         ),
-        subtitle: Text(
-          'Size: ${sizeGB.toStringAsFixed(2)} GB • Quantization: ${file.type}\n'
-          'Runtime RAM: unknown until this exact model, context, and backend are tested',
-          style: const TextStyle(fontSize: 12),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Size: ${sizeGB.toStringAsFixed(2)} GB • Quantization: '
+                '${file.type}',
+                style: const TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              FilledButton.tonalIcon(
+                onPressed: command == null
+                    ? null
+                    : () async {
+                        await Clipboard.setData(ClipboardData(text: command));
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Command copied. Run it on the computer that '
+                              'hosts Ollama.',
+                            ),
+                          ),
+                        );
+                      },
+                icon: const Icon(Icons.terminal_rounded, size: 18),
+                label: const Text('Copy Ollama command'),
+              ),
+            ],
+          ),
         ),
-        trailing: FilledButton.icon(
+        trailing: TextButton.icon(
           onPressed: model.license == null
               ? null
               : () async {
@@ -238,14 +300,15 @@ class ModelDetailScreen extends ConsumerWidget {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Model verified and registered locally.'),
+                        content: Text(
+                            'File stored. It cannot run on-device in this build; use it through Ollama.'),
                       ),
                     );
                   }
                 },
           icon: const Icon(Icons.download, size: 16),
-          label: const Text('Download'),
-          style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
+          label: const Text('File'),
+          style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
         ),
       ),
     );
