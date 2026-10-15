@@ -1,0 +1,74 @@
+[
+  {
+    "id": "g1",
+    "question": "Which plant bolts quickly in July and should move to the shaded side?",
+    "document": "garden_notes.md",
+    "answerPhrase": "lettuce bolts quickly in July"
+  },
+  {
+    "id": "g2",
+    "question": "What time are the plants watered every morning?",
+    "document": "garden_notes.md",
+    "answerPhrase": "every morning before eight o'clock"
+  },
+  {
+    "id": "g3",
+    "question": "Which kitchen scraps should be avoided in the worm bin?",
+    "document": "garden_notes.md",
+    "answerPhrase": "Citrus peel and onion skins are avoided"
+  },
+  {
+    "id": "g4",
+    "question": "How deep are garlic cloves planted in October?",
+    "document": "garden_notes.md",
+    "answerPhrase": "garlic cloves are planted four centimetres deep"
+  },
+  {
+    "id": "b1",
+    "question": "How often should tyre pressure be checked?",
+    "document": "bike_maintenance.md",
+    "answerPhrase": "Tyre pressure should be checked weekly"
+  },
+  {
+    "id": "b2",
+    "question": "Which lubricant suits the rainy season for the chain?",
+    "document": "bike_maintenance.md",
+    "answerPhrase": "wet lubricant during the rainy season"
+  },
+  {
+    "id": "b3",
+    "question": "When should brake pads be replaced?",
+    "document": "bike_maintenance.md",
+    "answerPhrase": "Replace them when the grooves in the rubber"
+  },
+  {
+    "id": "b4",
+    "question": "How much wheel wobble needs a mechanic to adjust spoke tension?",
+    "document": "bike_maintenance.md",
+    "answerPhrase": "A wobble of more than two millimetres"
+  },
+  {
+    "id": "s1",
+    "question": "What is the thin grey liquid on top of a starter called?",
+    "document": "sourdough_guide.md",
+    "answerPhrase": "called hooch"
+  },
+  {
+    "id": "s2",
+    "question": "Why does whole rye flour speed up fermentation?",
+    "document": "sourdough_guide.md",
+    "answerPhrase": "carries more wild yeast and nutrients"
+  },
+  {
+    "id": "s3",
+    "question": "At what temperature is the dough baked in the Dutch oven?",
+    "document": "sourdough_guide.md",
+    "answerPhrase": "240 degrees Celsius"
+  },
+  {
+    "id": "s4",
+    "question": "What does a starter that smells of nail polish remover need?",
+    "document": "sourdough_guide.md",
+    "answerPhrase": "it is hungry and should be fed"
+  }
+]
