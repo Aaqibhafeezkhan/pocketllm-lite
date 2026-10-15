@@ -8,11 +8,39 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Load keystore properties
+// Release signing inputs, in priority order:
+//   1. Environment variables (CI): ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD,
+//      ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+//   2. android/key.properties (local maintainer builds; git-ignored)
+// Neither is ever committed. See docs/RELEASE_SIGNING.md.
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
+}
+
+fun signingValue(envName: String, propertyName: String): String? =
+    System.getenv(envName)?.takeIf { it.isNotBlank() }
+        ?: (keystoreProperties[propertyName] as String?)?.takeIf { it.isNotBlank() }
+
+val releaseStoreFile = signingValue("ANDROID_KEYSTORE_PATH", "storeFile")
+val releaseStorePassword = signingValue("ANDROID_KEYSTORE_PASSWORD", "storePassword")
+val releaseKeyAlias = signingValue("ANDROID_KEY_ALIAS", "keyAlias")
+val releaseKeyPassword = signingValue("ANDROID_KEY_PASSWORD", "keyPassword")
+val hasReleaseSigning = listOf(
+    releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword
+).all { it != null }
+
+// Official release builds pass -Prelease.requireSigning=true. They must fail
+// loudly instead of quietly producing a debug-signed APK.
+val requireReleaseSigning =
+    (project.findProperty("release.requireSigning") as String?) == "true"
+if (requireReleaseSigning && !hasReleaseSigning) {
+    throw GradleException(
+        "Release signing is required but no keystore was provided. Set the " +
+            "ANDROID_KEYSTORE_* environment variables or create android/key.properties. " +
+            "Refusing to fall back to the debug key."
+    )
 }
 
 android {
@@ -39,12 +67,12 @@ android {
     }
 
     signingConfigs {
-        if (keystorePropertiesFile.exists()) {
+        if (hasReleaseSigning) {
             create("release") {
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+                storeFile = file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
             }
         }
     }
@@ -52,7 +80,10 @@ android {
     buildTypes {
         release {
             // Signing config - using release keystore if available, fallback to debug for development
-            signingConfig = if (keystorePropertiesFile.exists()) {
+            // Without a release keystore (and without -Prelease.requireSigning)
+            // local builds use the debug key. Such APKs are engineering
+            // builds only and cannot be upgraded to a properly signed build.
+            signingConfig = if (hasReleaseSigning) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")

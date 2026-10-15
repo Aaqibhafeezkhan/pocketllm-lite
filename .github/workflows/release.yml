@@ -1,0 +1,91 @@
+name: Release build (signed)
+
+# Manual only. Builds, verifies and uploads signed APKs as a workflow artifact.
+# It does NOT create or publish a GitHub release: the maintainer attaches the
+# verified artifacts to a release by hand after reading the checksums.
+#
+# Required repository secrets (protected, never committed):
+#   ANDROID_KEYSTORE_BASE64    base64 of the production keystore
+#   ANDROID_KEYSTORE_PASSWORD
+#   ANDROID_KEY_ALIAS
+#   ANDROID_KEY_PASSWORD
+# If any is missing the job fails at the first step. It never falls back to the
+# debug key.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: release # require reviewer approval via environment protection
+    steps:
+      - name: Require signing secrets
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PW: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=0
+          for name in KEYSTORE_B64 STORE_PW ALIAS KEY_PW; do
+            if [ -z "${!name}" ]; then echo "::error::Missing secret for $name"; missing=1; fi
+          done
+          exit $missing
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Restore keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/signing"
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/signing/release.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/signing/release.jks" >> "$GITHUB_ENV"
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+      - name: Build split APKs
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: >
+          flutter build apk --split-per-abi --release
+          --obfuscate --split-debug-info=build/symbols
+          --android-skip-build-dependency-validation
+          -Prelease.requireSigning=true
+
+      - name: Verify signatures (fails on the debug key)
+        run: node scripts/release/verify-apk-signature.mjs build/app/outputs/flutter-apk/*-release.apk
+
+      - name: Checksums
+        run: node scripts/release/checksums.mjs build/app/outputs/flutter-apk/SHA256SUMS.txt build/app/outputs/flutter-apk/*-release.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-apks
+          path: |
+            build/app/outputs/flutter-apk/*-release.apk
+            build/app/outputs/flutter-apk/SHA256SUMS.txt
+          if-no-files-found: error
+
+      - name: Remove keystore
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/signing"

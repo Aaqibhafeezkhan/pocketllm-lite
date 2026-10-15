@@ -52,3 +52,11 @@ key.properties
 
 # APKs
 *.apk
+
+# Signing material must never be tracked (see docs/RELEASE_SIGNING.md)
+key.properties*
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.bak
