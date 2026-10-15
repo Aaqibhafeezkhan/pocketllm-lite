@@ -144,8 +144,8 @@ export function assetKind(name: string): string {
   const lower = name.toLowerCase();
   if (lower.endsWith('.apk')) {
     if (lower.includes('arm64')) return 'ARM64 APK · most modern Android phones';
-    if (lower.includes('armeabi')) return 'ARMv7 APK · older 32-bit Android';
-    if (lower.includes('x86_64')) return 'x86_64 APK · emulator / compatible x86 device';
+    if (lower.includes('armeabi')) return 'ARMv7 APK · older 32-bit Android · no on-device model runtime';
+    if (lower.includes('x86_64')) return 'x86_64 APK · emulator only · no on-device model runtime';
     return 'Universal Android APK';
   }
   if (lower.includes('sha256')) return 'SHA-256 checksums';

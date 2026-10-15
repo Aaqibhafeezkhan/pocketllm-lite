@@ -60,7 +60,9 @@ Anything not listed here is not claimed. See
 1. **Install.** Download the APK for your device from the
    [v1.0.38 release](https://github.com/PocketLLM/pocketllm-lite/releases/tag/v1.0.38)
    (`arm64-v8a` for most phones from 2017 onward; compare the file against
-   `SHA256SUMS.txt`). Android 7.0 (API 24) or newer. v1.0.39 only changed the
+   `SHA256SUMS.txt`). **Only the `arm64-v8a` build contains the on-device model
+   runtime.** The `armeabi-v7a` and `x86_64` builds can still use an Ollama or
+   OpenAI-compatible server, OCR and documents, but cannot run local GGUF models. Android 7.0 (API 24) or newer. v1.0.39 only changed the
    Web Edition and carries no APK, and GitHub's "latest" badge still points at
    the older v1.0.35. Release APKs are debug-signed engineering builds, see
    [Known limitations](docs/KNOWN_LIMITATIONS.md).
