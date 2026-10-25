@@ -14,5 +14,12 @@
   "settings": "Ajustes",
   "benchmarks": "Rendimiento",
   "history": "Historial",
-  "chat": "Chat"
+  "chat": "Chat",
+  "skillDetailsTitle": "Detalles de la habilidad",
+  "skillNotFound": "Habilidad no encontrada",
+  "skillDescription": "Descripción",
+  "skillSource": "Fuente",
+  "skillActive": "Activa y en ejecución",
+  "skillDisabled": "Desactivada / en pausa",
+  "skillInstructions": "Instrucciones de la habilidad"
 }

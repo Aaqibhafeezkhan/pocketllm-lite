@@ -225,6 +225,34 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Get your first model'**
   String get modelSetupTitle;
+
+  /// In en, this message translates to:
+  /// **'Skill Details'**
+  String get skillDetailsTitle;
+
+  /// In en, this message translates to:
+  /// **'Skill not found'**
+  String get skillNotFound;
+
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get skillDescription;
+
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get skillSource;
+
+  /// In en, this message translates to:
+  /// **'Active & Running'**
+  String get skillActive;
+
+  /// In en, this message translates to:
+  /// **'Disabled / Paused'**
+  String get skillDisabled;
+
+  /// In en, this message translates to:
+  /// **'Skill Instructions'**
+  String get skillInstructions;
 }
 
 class _AppLocalizationsDelegate

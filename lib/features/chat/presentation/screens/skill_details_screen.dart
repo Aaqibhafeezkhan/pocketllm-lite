@@ -3,6 +3,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/providers.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/widgets/m3_app_bar.dart';
 
 class SkillDetailsScreen extends ConsumerWidget {
@@ -15,10 +16,11 @@ class SkillDetailsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final storage = ref.watch(storageServiceProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: M3AppBar(
-        title: 'Skill Details',
+        title: l10n.skillDetailsTitle,
         onBack: () => context.pop(),
       ),
       body: ValueListenableBuilder(
@@ -29,7 +31,7 @@ class SkillDetailsScreen extends ConsumerWidget {
           if (skillIndex == -1) {
             return Center(
               child: Text(
-                'Skill not found: $skillId',
+                '${l10n.skillNotFound}: $skillId',
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: colorScheme.error,
                 ),
@@ -110,7 +112,7 @@ class SkillDetailsScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Description',
+                        l10n.skillDescription,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colorScheme.onSurfaceVariant,
@@ -128,7 +130,7 @@ class SkillDetailsScreen extends ConsumerWidget {
                           skill.githubUrl!.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         Text(
-                          'Source',
+                          l10n.skillSource,
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colorScheme.onSurfaceVariant,
@@ -195,8 +197,8 @@ class SkillDetailsScreen extends ConsumerWidget {
                           const SizedBox(width: 8),
                           Text(
                             skill.isEnabled
-                                ? 'Active & Running'
-                                : 'Disabled / Paused',
+                                ? l10n.skillActive
+                                : l10n.skillDisabled,
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: skill.isEnabled
                                   ? colorScheme.primary
@@ -213,7 +215,7 @@ class SkillDetailsScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               // Body content
               Text(
-                'Skill Instructions',
+                l10n.skillInstructions,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

@@ -14,5 +14,12 @@
   "settings": "सेटिंग्स",
   "benchmarks": "प्रदर्शन परीक्षण",
   "history": "इतिहास",
-  "chat": "चैट"
+  "chat": "चैट",
+  "skillDetailsTitle": "स्किल विवरण",
+  "skillNotFound": "स्किल नहीं मिला",
+  "skillDescription": "विवरण",
+  "skillSource": "स्रोत",
+  "skillActive": "सक्रिय और चल रहा है",
+  "skillDisabled": "अक्षम / रुका हुआ",
+  "skillInstructions": "स्किल निर्देश"
 }

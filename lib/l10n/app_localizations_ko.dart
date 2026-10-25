@@ -68,4 +68,25 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get modelSetupTitle => 'Get your first model';
+
+  @override
+  String get skillDetailsTitle => "스킬 세부정보";
+
+  @override
+  String get skillNotFound => "스킬을 찾을 수 없음";
+
+  @override
+  String get skillDescription => "설명";
+
+  @override
+  String get skillSource => "소스";
+
+  @override
+  String get skillActive => "활성 및 실행 중";
+
+  @override
+  String get skillDisabled => "비활성화 / 일시 중지";
+
+  @override
+  String get skillInstructions => "스킬 지침";
 }
