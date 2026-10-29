@@ -68,4 +68,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get modelSetupTitle => 'Get your first model';
+
+  @override
+  String get skillDetailsTitle => "技能详情";
+
+  @override
+  String get skillNotFound => "未找到技能";
+
+  @override
+  String get skillDescription => "描述";
+
+  @override
+  String get skillSource => "来源";
+
+  @override
+  String get skillActive => "已启用并运行";
+
+  @override
+  String get skillDisabled => "已禁用／已暂停";
+
+  @override
+  String get skillInstructions => "技能说明";
 }

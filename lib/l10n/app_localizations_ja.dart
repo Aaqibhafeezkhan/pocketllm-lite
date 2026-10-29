@@ -68,4 +68,25 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get modelSetupTitle => 'Get your first model';
+
+  @override
+  String get skillDetailsTitle => "スキルの詳細";
+
+  @override
+  String get skillNotFound => "スキルが見つかりません";
+
+  @override
+  String get skillDescription => "説明";
+
+  @override
+  String get skillSource => "ソース";
+
+  @override
+  String get skillActive => "有効・実行中";
+
+  @override
+  String get skillDisabled => "無効／一時停止";
+
+  @override
+  String get skillInstructions => "スキルの手順";
 }

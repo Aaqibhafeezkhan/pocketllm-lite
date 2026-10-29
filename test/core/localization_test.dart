@@ -158,4 +158,40 @@ void main() {
       expect(storage.values[AppConstants.appLocaleKey], 'system');
     });
   });
+  group('skill details localization', () {
+    testWidgets('labels resolve in English and Japanese without overflow',
+        (tester) async {
+      Future<void> pumpLabels(Locale locale) => tester.pumpWidget(
+            _app(
+              locale: locale,
+              child: Builder(
+                builder: (context) {
+                  final l10n = AppLocalizations.of(context);
+                  return SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Text(l10n.skillDetailsTitle),
+                        Text(l10n.skillNotFound),
+                        Text(l10n.skillDescription),
+                        Text(l10n.skillSource),
+                        Text(l10n.skillActive),
+                        Text(l10n.skillDisabled),
+                        Text(l10n.skillInstructions),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+
+      await pumpLabels(const Locale('en'));
+      expect(find.text('Skill Details'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await pumpLabels(const Locale('ja'));
+      expect(find.text('スキルの詳細'), findsOneWidget);
+      expect(find.text('スキルの手順'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
 }

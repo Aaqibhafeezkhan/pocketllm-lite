@@ -14,5 +14,12 @@
   "settings": "设置",
   "benchmarks": "性能测试",
   "history": "历史记录",
-  "chat": "对话"
+  "chat": "对话",
+  "skillDetailsTitle": "技能详情",
+  "skillNotFound": "未找到技能",
+  "skillDescription": "描述",
+  "skillSource": "来源",
+  "skillActive": "已启用并运行",
+  "skillDisabled": "已禁用／已暂停",
+  "skillInstructions": "技能说明"
 }

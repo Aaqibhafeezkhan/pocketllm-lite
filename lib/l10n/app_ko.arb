@@ -14,5 +14,12 @@
   "settings": "설정",
   "benchmarks": "벤치마크",
   "history": "기록",
-  "chat": "채팅"
+  "chat": "채팅",
+  "skillDetailsTitle": "스킬 세부정보",
+  "skillNotFound": "스킬을 찾을 수 없음",
+  "skillDescription": "설명",
+  "skillSource": "소스",
+  "skillActive": "활성 및 실행 중",
+  "skillDisabled": "비활성화 / 일시 중지",
+  "skillInstructions": "스킬 지침"
 }

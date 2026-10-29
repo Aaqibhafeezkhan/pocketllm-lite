@@ -68,4 +68,25 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get modelSetupTitle => 'Get your first model';
+
+  @override
+  String get skillDetailsTitle => "स्किल विवरण";
+
+  @override
+  String get skillNotFound => "स्किल नहीं मिला";
+
+  @override
+  String get skillDescription => "विवरण";
+
+  @override
+  String get skillSource => "स्रोत";
+
+  @override
+  String get skillActive => "सक्रिय और चल रहा है";
+
+  @override
+  String get skillDisabled => "अक्षम / रुका हुआ";
+
+  @override
+  String get skillInstructions => "स्किल निर्देश";
 }

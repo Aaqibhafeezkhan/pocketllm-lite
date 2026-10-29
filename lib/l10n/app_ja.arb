@@ -14,5 +14,12 @@
   "settings": "設定",
   "benchmarks": "ベンチマーク",
   "history": "履歴",
-  "chat": "チャット"
+  "chat": "チャット",
+  "skillDetailsTitle": "スキルの詳細",
+  "skillNotFound": "スキルが見つかりません",
+  "skillDescription": "説明",
+  "skillSource": "ソース",
+  "skillActive": "有効・実行中",
+  "skillDisabled": "無効／一時停止",
+  "skillInstructions": "スキルの手順"
 }
